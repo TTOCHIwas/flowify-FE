@@ -1,5 +1,5 @@
-name: 'flowity 이슈 생성'
-description: 'flowity repo에 이슈를 생성합니다.'
+name: 'flowify 이슈 생성'
+description: 'flowify repo에 이슈를 생성합니다.'
 assignees: []
 labels: [✨ Feature]
 title: '제목을 입력해주세요'
