@@ -1,0 +1,5 @@
+pnpm test
+npx lint-staged
+
+pnpm run lint:fix
+pnpm run tsc
