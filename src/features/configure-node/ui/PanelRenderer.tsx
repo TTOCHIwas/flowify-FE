@@ -1,12 +1,14 @@
 import { Text } from "@chakra-ui/react";
 
-import { selectActiveNode, useWorkflowStore } from "@/shared";
+import { useWorkflowStore } from "@/shared";
 
 // PANEL_MAP — 패널 컴포넌트는 다음 이슈에서 구현 예정
 // const PANEL_MAP = {} as Record<string, React.ComponentType>;
 
 export const PanelRenderer = () => {
-  const activeNode = useWorkflowStore(selectActiveNode);
+  const activeNode = useWorkflowStore(
+    (s) => s.nodes.find((n) => n.id === s.activePanelNodeId) ?? null,
+  );
 
   if (!activeNode) return null;
 
