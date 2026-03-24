@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { MdErrorOutline } from "react-icons/md";
 import { useNavigate, useParams } from "react-router";
 
@@ -60,10 +60,9 @@ const WorkflowEditorInner = () => {
   const setWorkflowMeta = useWorkflowStore((s) => s.setWorkflowMeta);
   const resetEditor = useWorkflowStore((s) => s.resetEditor);
 
-  // API 연동 전 로컬 상태로 관리 — 추후 React Query로 교체
-  // TODO: workflowApi.getById(id) 연동 후 isLoading 초기값을 true로 변경
-  const [isLoading] = useState(false);
-  const [isError] = useState(false);
+  // TODO: workflowApi.getById(id) 연동 후 React Query로 교체
+  const isLoading = false;
+  const isError = false;
 
   useEffect(() => {
     if (!id) {

@@ -17,7 +17,7 @@ export const Header = () => {
         px={4}
         position="relative"
       >
-        <Link to={ROUTE_PATHS.ROOT}>
+        <Link to={ROUTE_PATHS.MAIN}>
           <Text>로고</Text>
         </Link>
         <HStack
