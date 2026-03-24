@@ -167,20 +167,3 @@ export const useWorkflowStore = create<
     resetEditor: () => set(() => ({ ...initialState })),
   })),
 );
-
-// ─── 파생 셀렉터 ─────────────────────────────────────────────
-// useWorkflowStore(selectActiveNode) 형태로 구독 범위를 최소화합니다.
-
-export const selectActiveNode = (
-  state: WorkflowEditorState & WorkflowEditorActions,
-): Node | null =>
-  state.nodes.find((n) => n.id === state.activePanelNodeId) ?? null;
-
-export const selectIsConfigured =
-  (id: string) =>
-  (state: WorkflowEditorState & WorkflowEditorActions): boolean => {
-    const node = state.nodes.find((n) => n.id === id);
-    return (
-      (node?.data as Record<string, unknown> | undefined)?.isConfigured === true
-    );
-  };
