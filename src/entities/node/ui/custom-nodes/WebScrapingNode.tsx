@@ -12,7 +12,9 @@ export const WebScrapingNode = ({
   const config = data.config as WebScrapingNodeConfig;
   return (
     <BaseNode id={id} data={data} selected={selected}>
-      <Text noOfLines={1}>{config.targetUrl ?? "URL 미설정"}</Text>
+      <Text overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+        {config.targetUrl ?? "URL 미설정"}
+      </Text>
     </BaseNode>
   );
 };
