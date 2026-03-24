@@ -7,6 +7,9 @@ import { ROUTE_PATHS } from "@/shared";
 
 import { Footer, Header } from "../components";
 
+const SCROLL_COLLAPSE_THRESHOLD = 24;
+const SCROLL_EXPAND_THRESHOLD = 8;
+
 export const RootLayout = () => {
   const location = useLocation();
   const isMainRoute = location.pathname === ROUTE_PATHS.MAIN;
@@ -24,11 +27,11 @@ export const RootLayout = () => {
       const scrollY = window.scrollY;
 
       setIsHeaderCollapsed((current) => {
-        if (scrollY > 24) {
+        if (scrollY > SCROLL_COLLAPSE_THRESHOLD) {
           return true;
         }
 
-        if (scrollY < 8) {
+        if (scrollY < SCROLL_EXPAND_THRESHOLD) {
           return false;
         }
 
