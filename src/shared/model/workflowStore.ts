@@ -12,6 +12,8 @@ import { current } from "immer";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
+import { collectDescendantIds } from "../libs/graph";
+
 // ─── 실행 상태 타입 ──────────────────────────────────────────
 export type ExecutionStatus = "idle" | "running" | "success" | "failed";
 
@@ -45,7 +47,7 @@ interface WorkflowEditorActions {
    */
   addNode: (node: Node) => void;
 
-  /** 노드 삭제 (연결된 엣지도 함께 제거) */
+  /** 노드 삭제 (후속 노드 및 관련 엣지도 함께 제거) */
   removeNode: (id: string) => void;
 
   /**
@@ -116,11 +118,19 @@ export const useWorkflowStore = create<
 
     removeNode: (id) =>
       set((state) => {
-        state.nodes = state.nodes.filter((n) => n.id !== id);
+        const plainEdges = current(state.edges);
+        const descendants = collectDescendantIds(id, plainEdges);
+        const removeTargets = new Set([id, ...descendants]);
+
+        state.nodes = state.nodes.filter((n) => !removeTargets.has(n.id));
         state.edges = state.edges.filter(
-          (e) => e.source !== id && e.target !== id,
+          (e) => !removeTargets.has(e.source) && !removeTargets.has(e.target),
         );
-        if (state.activePanelNodeId === id) {
+
+        if (
+          state.activePanelNodeId &&
+          removeTargets.has(state.activePanelNodeId)
+        ) {
           state.activePanelNodeId = null;
         }
       }),
