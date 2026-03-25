@@ -1,16 +1,15 @@
-import React, { useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
+import type { MouseEvent } from "react";
 
 import {
   Background,
   BackgroundVariant,
   Controls,
   MiniMap,
-  type Node,
-  type NodeChange,
-  type NodeTypes,
   ReactFlow,
   useReactFlow,
 } from "@xyflow/react";
+import type { Node, NodeChange, NodeTypes } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import {
@@ -77,28 +76,27 @@ export const Canvas = () => {
     [onNodesChange],
   );
 
-  const { setCenter, getViewport } = useReactFlow();
+  const { setCenter } = useReactFlow();
 
   const handleNodeClick = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
+    (_event: MouseEvent, node: Node) => {
       if (node.id.startsWith("placeholder-")) {
         setActivePlaceholder({ id: node.id, position: node.position });
 
-        const { zoom } = getViewport();
         const viewportWidth = window.innerWidth;
-        const offsetX = (viewportWidth * 0.2) / zoom;
+        const offsetX = viewportWidth * 0.2;
         const nodeHeight = node.measured?.height ?? 134;
         const centerY = node.position.y + nodeHeight / 2;
 
         setCenter(node.position.x + offsetX, centerY, {
-          zoom,
+          zoom: 1,
           duration: 300,
         });
       } else {
         setActivePlaceholder(null);
       }
     },
-    [setActivePlaceholder, setCenter, getViewport],
+    [setActivePlaceholder, setCenter],
   );
 
   const handlePaneClick = useCallback(() => {

@@ -1,12 +1,10 @@
-import {
-  type Connection,
-  type Edge,
-  type EdgeChange,
-  type Node,
-  type NodeChange,
-  addEdge,
-  applyEdgeChanges,
-  applyNodeChanges,
+import { addEdge, applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
+import type {
+  Connection,
+  Edge,
+  EdgeChange,
+  Node,
+  NodeChange,
 } from "@xyflow/react";
 import { current } from "immer";
 import { create } from "zustand";
