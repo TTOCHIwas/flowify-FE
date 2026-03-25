@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 
 import {
   Background,
@@ -9,6 +9,7 @@ import {
   type NodeChange,
   type NodeTypes,
   ReactFlow,
+  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -30,7 +31,7 @@ import {
   TriggerNode,
   WebScrapingNode,
 } from "@/entities/node";
-import { getLeafNodeIds, useWorkflowStore } from "@/shared";
+import { useWorkflowStore } from "@/shared";
 
 const PLACEHOLDER_OFFSET_X = 280;
 
@@ -59,6 +60,10 @@ export const Canvas = () => {
   const onNodesChange = useWorkflowStore((s) => s.onNodesChange);
   const onEdgesChange = useWorkflowStore((s) => s.onEdgesChange);
   const onConnect = useWorkflowStore((s) => s.onConnect);
+  const startNodeId = useWorkflowStore((s) => s.startNodeId);
+  const endNodeId = useWorkflowStore((s) => s.endNodeId);
+  const activePlaceholder = useWorkflowStore((s) => s.activePlaceholder);
+  const setActivePlaceholder = useWorkflowStore((s) => s.setActivePlaceholder);
 
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -72,54 +77,72 @@ export const Canvas = () => {
     [onNodesChange],
   );
 
+  const { setCenter, getViewport } = useReactFlow();
+
+  const handleNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      if (node.id.startsWith("placeholder-")) {
+        setActivePlaceholder({ id: node.id, position: node.position });
+
+        const { zoom } = getViewport();
+        const viewportWidth = window.innerWidth;
+        const offsetX = (viewportWidth * 0.2) / zoom;
+        const nodeHeight = node.measured?.height ?? 134;
+        const centerY = node.position.y + nodeHeight / 2;
+
+        setCenter(node.position.x + offsetX, centerY, {
+          zoom,
+          duration: 300,
+        });
+      } else {
+        setActivePlaceholder(null);
+      }
+    },
+    [setActivePlaceholder, setCenter, getViewport],
+  );
+
+  const handlePaneClick = useCallback(() => {
+    setActivePlaceholder(null);
+  }, [setActivePlaceholder]);
+
   const nodesWithPlaceholders = useMemo(() => {
-    if (nodes.length === 0) {
-      return [
-        {
-          id: "placeholder-start",
-          type: "placeholder",
-          position: { x: 0, y: 0 },
-          data: { label: "시작" },
-          initialWidth: 100,
-          initialHeight: 134,
-          selectable: false,
-          draggable: false,
-        },
-        {
-          id: "placeholder-end",
-          type: "placeholder",
-          position: { x: PLACEHOLDER_OFFSET_X, y: 0 },
-          data: { label: "다음" },
-          initialWidth: 100,
-          initialHeight: 134,
-          selectable: false,
-          draggable: false,
-        },
-      ];
-    }
+    const result: Node[] = [...nodes];
 
-    const nodeIds = nodes.map((n) => n.id);
-    const leafIds = getLeafNodeIds(nodeIds, edges);
-
-    const placeholders: Node[] = leafIds.map((leafId) => {
-      const leafNode = nodes.find((n) => n.id === leafId)!;
-      return {
-        id: `placeholder-${leafId}`,
+    if (!startNodeId) {
+      result.push({
+        id: "placeholder-start",
         type: "placeholder",
-        position: {
-          x: leafNode.position.x + PLACEHOLDER_OFFSET_X,
-          y: leafNode.position.y,
-        },
-        data: {},
+        position: { x: 0, y: 0 },
+        data: { label: "시작" },
         initialWidth: 100,
         initialHeight: 134,
         selectable: false,
         draggable: false,
-      };
-    });
+      });
+    }
 
-    return [...nodes, ...placeholders];
-  }, [nodes, edges]);
+    if (!endNodeId) {
+      const anchorX = startNodeId
+        ? (nodes.find((n) => n.id === startNodeId)?.position.x ?? 0) +
+          PLACEHOLDER_OFFSET_X
+        : PLACEHOLDER_OFFSET_X;
+
+      result.push({
+        id: "placeholder-end",
+        type: "placeholder",
+        position: { x: anchorX, y: 0 },
+        data: { label: "도착" },
+        initialWidth: 100,
+        initialHeight: 134,
+        selectable: false,
+        draggable: false,
+      });
+    }
+
+    return result;
+  }, [nodes, startNodeId, endNodeId]);
+
+  const isPanelOpen = activePlaceholder !== null;
 
   return (
     <ReactFlow
@@ -129,6 +152,12 @@ export const Canvas = () => {
       onNodesChange={handleNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
+      onNodeClick={handleNodeClick}
+      onPaneClick={handlePaneClick}
+      panOnDrag={!isPanelOpen}
+      zoomOnScroll={!isPanelOpen}
+      zoomOnPinch={!isPanelOpen}
+      zoomOnDoubleClick={!isPanelOpen}
       fitView
     >
       <Background variant={BackgroundVariant.Dots} gap={16} size={1} />

@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router";
 import { Box, Button, Icon, Spinner, Text } from "@chakra-ui/react";
 import { ReactFlowProvider } from "@xyflow/react";
 
-import { AddNodeButton } from "@/features/add-node";
+import { AddNodeButton, ServiceSelectionPanel } from "@/features/add-node";
 import { ROUTE_PATHS, useWorkflowStore } from "@/shared";
 import { Canvas, EditorToolbar, InputPanel, OutputPanel } from "@/widgets";
 
@@ -86,6 +86,7 @@ const WorkflowEditorInner = () => {
       {/* Canvas 영역 — 패널·버튼·빈 상태가 absolute로 올라탐 */}
       <Box flex={1} position="relative" overflow="hidden">
         <Canvas />
+        <ServiceSelectionPanel />
         <InputPanel />
         <OutputPanel />
         <Box position="absolute" bottom={4} left={4} zIndex={10}>
