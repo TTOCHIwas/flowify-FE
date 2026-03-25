@@ -1,12 +1,10 @@
-import {
-  type Connection,
-  type Edge,
-  type EdgeChange,
-  type Node,
-  type NodeChange,
-  addEdge,
-  applyEdgeChanges,
-  applyNodeChanges,
+import { addEdge, applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
+import type {
+  Connection,
+  Edge,
+  EdgeChange,
+  Node,
+  NodeChange,
 } from "@xyflow/react";
 import { current } from "immer";
 import { create } from "zustand";
@@ -25,6 +23,15 @@ interface WorkflowEditorState {
   edges: Edge[];
   /** 현재 설정 패널이 열린 노드 ID (null이면 패널 닫힘) */
   activePanelNodeId: string | null;
+  /** 시작 노드 ID (null이면 미설정) */
+  startNodeId: string | null;
+  /** 도착 노드 ID (null이면 미설정) */
+  endNodeId: string | null;
+  /** 현재 클릭된 placeholder 정보 (null이면 선택 패널 닫힘) */
+  activePlaceholder: {
+    id: string;
+    position: { x: number; y: number };
+  } | null;
   /** 현재 편집 중인 워크플로우 ID */
   workflowId: string;
   /** 워크플로우 이름 */
@@ -72,6 +79,17 @@ interface WorkflowEditorActions {
   /** 실행 상태 변경 */
   setExecutionStatus: (status: ExecutionStatus) => void;
 
+  /** 시작 노드 ID 설정 */
+  setStartNodeId: (id: string | null) => void;
+
+  /** 도착 노드 ID 설정 */
+  setEndNodeId: (id: string | null) => void;
+
+  /** 활성 placeholder 설정 (서비스 선택 패널 열기/닫기) */
+  setActivePlaceholder: (
+    placeholder: { id: string; position: { x: number; y: number } } | null,
+  ) => void;
+
   /** 에디터 상태 초기화 (페이지 이탈 시 호출) */
   resetEditor: () => void;
 }
@@ -81,6 +99,9 @@ const initialState: WorkflowEditorState = {
   nodes: [],
   edges: [],
   activePanelNodeId: null,
+  startNodeId: null,
+  endNodeId: null,
+  activePlaceholder: null,
   workflowId: "",
   workflowName: "",
   executionStatus: "idle",
@@ -133,6 +154,14 @@ export const useWorkflowStore = create<
         ) {
           state.activePanelNodeId = null;
         }
+
+        if (state.startNodeId && removeTargets.has(state.startNodeId)) {
+          state.startNodeId = null;
+        }
+
+        if (state.endNodeId && removeTargets.has(state.endNodeId)) {
+          state.endNodeId = null;
+        }
       }),
 
     updateNodeConfig: (id, config) =>
@@ -155,6 +184,22 @@ export const useWorkflowStore = create<
     closePanel: () =>
       set((state) => {
         state.activePanelNodeId = null;
+      }),
+
+    // ── 시작 / 도착 노드 ──────────────────────────────────
+    setStartNodeId: (id) =>
+      set((state) => {
+        state.startNodeId = id;
+      }),
+
+    setEndNodeId: (id) =>
+      set((state) => {
+        state.endNodeId = id;
+      }),
+
+    setActivePlaceholder: (placeholder) =>
+      set((state) => {
+        state.activePlaceholder = placeholder;
       }),
 
     // ── 메타 / 실행 상태 ──────────────────────────────────

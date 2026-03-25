@@ -9,22 +9,33 @@ import { useWorkflowStore } from "@/shared";
 const BASE_POSITION = { x: 250, y: 250 };
 const OFFSET_STEP = 30;
 
+interface AddNodeOptions {
+  position?: { x: number; y: number };
+}
+
 export const useAddNode = () => {
   const addNode = useWorkflowStore((s) => s.addNode);
   const callCountRef = useRef(0);
 
-  const addNodeByType = (type: NodeType) => {
+  const addNodeByType = (type: NodeType, options?: AddNodeOptions): string => {
     const meta = NODE_REGISTRY[type];
-    const offset = callCountRef.current * OFFSET_STEP;
-    callCountRef.current += 1;
+
+    let position: { x: number; y: number };
+    if (options?.position) {
+      position = options.position;
+    } else {
+      const offset = callCountRef.current * OFFSET_STEP;
+      callCountRef.current += 1;
+      position = {
+        x: BASE_POSITION.x + offset,
+        y: BASE_POSITION.y + offset,
+      };
+    }
 
     const node: Node = {
       id: crypto.randomUUID(),
       type,
-      position: {
-        x: BASE_POSITION.x + offset,
-        y: BASE_POSITION.y + offset,
-      },
+      position,
       data: {
         type,
         label: meta.label,
@@ -35,6 +46,7 @@ export const useAddNode = () => {
     };
 
     addNode(node);
+    return node.id;
   };
 
   return { addNode: addNodeByType };
