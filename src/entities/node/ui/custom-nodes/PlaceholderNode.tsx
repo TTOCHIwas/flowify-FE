@@ -4,9 +4,9 @@ import { Box, Icon, Text, VStack } from "@chakra-ui/react";
 import { Handle, Position } from "@xyflow/react";
 import type { Node, NodeProps } from "@xyflow/react";
 
-interface PlaceholderNodeData {
+type PlaceholderNodeData = {
   label?: string;
-}
+};
 
 export const PlaceholderNode = ({
   data,
