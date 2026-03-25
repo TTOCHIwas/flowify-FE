@@ -12,5 +12,5 @@ export const PanelRenderer = () => {
 
   if (!activeNode) return null;
 
-  return <Text>노드 설정 패널 준비 중</Text>;
+  return <Text>설정 패널 준비 중</Text>;
 };
