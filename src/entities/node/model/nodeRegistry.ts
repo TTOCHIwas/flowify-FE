@@ -97,7 +97,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeMeta> = {
 
   "web-scraping": {
     type: "web-scraping",
-    label: "웹 스크래핑",
+    label: "웹 수집",
     category: "domain",
     iconComponent: MdLanguage,
     color: "nodeColor.webScraping",
@@ -133,7 +133,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeMeta> = {
   // ── 프로세싱 & 로직 ──────────────────────────────────────
   trigger: {
     type: "trigger",
-    label: "트리거",
+    label: "시작 조건",
     category: "processing",
     iconComponent: MdBolt,
     color: "nodeColor.trigger",
@@ -150,7 +150,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeMeta> = {
 
   filter: {
     type: "filter",
-    label: "필터",
+    label: "걸러내기",
     category: "processing",
     iconComponent: MdFilterList,
     color: "nodeColor.filter",
@@ -177,7 +177,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeMeta> = {
 
   loop: {
     type: "loop",
-    label: "반복",
+    label: "하나씩 처리",
     category: "processing",
     iconComponent: MdLoop,
     color: "nodeColor.loop",
@@ -193,7 +193,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeMeta> = {
 
   condition: {
     type: "condition",
-    label: "조건 분기",
+    label: "분류",
     category: "processing",
     iconComponent: MdCallSplit,
     color: "nodeColor.condition",
@@ -223,7 +223,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeMeta> = {
 
   "multi-output": {
     type: "multi-output",
-    label: "다중 출력",
+    label: "여러 결과",
     category: "processing",
     iconComponent: MdCallMade,
     color: "nodeColor.multiOutput",
@@ -252,7 +252,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeMeta> = {
 
   "data-process": {
     type: "data-process",
-    label: "데이터 처리",
+    label: "가공",
     category: "processing",
     iconComponent: MdSettings,
     color: "nodeColor.dataProcess",
@@ -276,7 +276,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeMeta> = {
 
   "output-format": {
     type: "output-format",
-    label: "출력 포맷",
+    label: "형식 변환",
     category: "processing",
     iconComponent: MdArticle,
     color: "nodeColor.outputFormat",
@@ -291,7 +291,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeMeta> = {
 
   "early-exit": {
     type: "early-exit",
-    label: "조기 종료",
+    label: "중단",
     category: "processing",
     iconComponent: MdExitToApp,
     color: "nodeColor.earlyExit",
@@ -330,7 +330,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeMeta> = {
   // ── AI ───────────────────────────────────────────────────
   llm: {
     type: "llm",
-    label: "AI 처리",
+    label: "AI",
     category: "ai",
     iconComponent: MdAutoAwesome,
     color: "nodeColor.llm",

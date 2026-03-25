@@ -12,7 +12,7 @@ export const OutputFormatNode = ({
   const config = data.config as OutputFormatNodeConfig;
   return (
     <BaseNode id={id} data={data} selected={selected}>
-      <Text>{config.format ? config.format.toUpperCase() : "포맷 미설정"}</Text>
+      <Text>{config.format ? config.format.toUpperCase() : "형식 미설정"}</Text>
     </BaseNode>
   );
 };

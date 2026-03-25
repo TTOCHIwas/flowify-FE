@@ -12,7 +12,7 @@ export const LoopNode = ({
   const config = data.config as LoopNodeConfig;
   return (
     <BaseNode id={id} data={data} selected={selected}>
-      <Text>{config.targetField ?? "반복 대상 미설정"}</Text>
+      <Text>{config.targetField ?? "처리 대상 미설정"}</Text>
       <Text>최대 {config.maxIterations}회</Text>
     </BaseNode>
   );

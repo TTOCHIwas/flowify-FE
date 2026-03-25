@@ -12,7 +12,7 @@ export const TriggerNode = ({
   const config = data.config as TriggerNodeConfig;
   return (
     <BaseNode id={id} data={data} selected={selected}>
-      <Text>{config.triggerType ?? "트리거 타입 미설정"}</Text>
+      <Text>{config.triggerType ?? "시작 조건 미설정"}</Text>
       <Text>{config.schedule ?? config.eventType ?? "일정 미설정"}</Text>
     </BaseNode>
   );

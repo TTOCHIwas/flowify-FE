@@ -13,7 +13,7 @@ export const ConditionNode = ({
   return (
     <BaseNode id={id} data={data} selected={selected}>
       <Text>
-        {config.field ?? "필드 미설정"} {config.operator ?? ""}{" "}
+        {config.field ?? "대상 미설정"} {config.operator ?? ""}{" "}
         {config.value ?? ""}
       </Text>
     </BaseNode>

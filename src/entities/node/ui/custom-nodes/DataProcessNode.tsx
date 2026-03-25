@@ -25,7 +25,7 @@ export const DataProcessNode = ({
       <Text>
         {config.operation ? OPERATION_LABEL[config.operation] : "동작 미설정"}
       </Text>
-      <Text>{config.field ?? "필드 미설정"}</Text>
+      <Text>{config.field ?? "대상 미설정"}</Text>
     </BaseNode>
   );
 };
