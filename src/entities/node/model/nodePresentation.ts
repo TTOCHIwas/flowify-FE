@@ -1,5 +1,4 @@
 import type { IconType } from "react-icons";
-import { MdApps } from "react-icons/md";
 
 import { NODE_REGISTRY } from "./nodeRegistry";
 import { getTypedConfig } from "./types";
@@ -32,8 +31,6 @@ export interface NodePresentation {
   surfaceState: NodeSurfaceState;
   iconComponent: IconType;
 }
-
-const TEMPORARY_ICON = MdApps;
 
 const STORAGE_SERVICE_TITLE: Record<
   NonNullable<StorageNodeConfig["service"]>,
@@ -75,18 +72,46 @@ const getRoleLabel = (role: NodeRole): string => {
 
 const getConfiguredTitle = (data: FlowNodeData): string | null => {
   switch (data.type) {
-    case "storage": {
-      const config = getTypedConfig("storage", data.config);
-      return config.service ? STORAGE_SERVICE_TITLE[config.service] : null;
-    }
     case "communication": {
       const config = getTypedConfig("communication", data.config);
       return config.service
         ? COMMUNICATION_SERVICE_TITLE[config.service]
         : null;
     }
-    default:
+    case "storage": {
+      const config = getTypedConfig("storage", data.config);
+      return config.service ? STORAGE_SERVICE_TITLE[config.service] : null;
+    }
+    case "spreadsheet": {
+      const config = getTypedConfig("spreadsheet", data.config);
+      return config.service ? "Google Sheets" : null;
+    }
+    case "calendar": {
+      const config = getTypedConfig("calendar", data.config);
+      return config.service ? "Google Calendar" : null;
+    }
+    case "web-scraping": {
+      const config = getTypedConfig("web-scraping", data.config);
+      return config.targetUrl ?? null;
+    }
+    case "filter":
+    case "loop":
+    case "condition":
+    case "multi-output":
+    case "data-process":
+    case "output-format":
+    case "early-exit":
+    case "notification":
+    case "trigger":
       return null;
+    case "llm": {
+      const config = getTypedConfig("llm", data.config);
+      return config.model ?? null;
+    }
+    default: {
+      const _exhaustive: never = data.type;
+      return _exhaustive;
+    }
   }
 };
 
@@ -129,6 +154,6 @@ export const getNodePresentation = (
     title: configuredTitle ?? fallbackTitle,
     helperText: getHelperText(role, surfaceState),
     surfaceState,
-    iconComponent: TEMPORARY_ICON,
+    iconComponent: meta.iconComponent,
   };
 };
