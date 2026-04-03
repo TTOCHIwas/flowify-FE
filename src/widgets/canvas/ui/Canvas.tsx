@@ -31,6 +31,7 @@ import {
   TriggerNode,
   WebScrapingNode,
 } from "@/entities/node";
+import type { NodeType } from "@/entities/node";
 import { getLeafNodeIds, useWorkflowStore } from "@/shared";
 
 const NODE_GAP_X = 96;
@@ -56,7 +57,9 @@ const getNodeCenterY = (
 ) =>
   getCenterYFromTop(node.position.y, node.measured?.height ?? fallbackHeight);
 
-const nodeTypes: NodeTypes = {
+type CanvasNodeType = NodeType | "placeholder" | "creation-method";
+
+const nodeTypes = {
   communication: CommunicationNode,
   storage: StorageNode,
   spreadsheet: SpreadsheetNode,
@@ -74,7 +77,7 @@ const nodeTypes: NodeTypes = {
   llm: LLMNode,
   placeholder: PlaceholderNode,
   "creation-method": CreationMethodNode,
-};
+} satisfies Record<CanvasNodeType, NodeTypes[string]>;
 
 export const Canvas = () => {
   const nodes = useWorkflowStore((s) => s.nodes);
