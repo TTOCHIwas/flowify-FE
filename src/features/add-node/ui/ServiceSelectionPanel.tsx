@@ -1,13 +1,20 @@
-import { useState } from "react";
-import { MdSearch } from "react-icons/md";
+import { useCallback, useState } from "react";
+import { MdArrowBack, MdSearch } from "react-icons/md";
 
 import { Box, Grid, Icon, Input, Text, VStack } from "@chakra-ui/react";
 
 import { NODE_REGISTRY } from "@/entities/node";
-import type { NodeType } from "@/entities/node";
+import type { NodeMeta } from "@/entities/node";
 import { useWorkflowStore } from "@/shared";
 
+import { CATEGORY_SERVICE_MAP } from "../model/serviceMap";
+import type { ServiceOption } from "../model/serviceMap";
+import { SERVICE_REQUIREMENTS } from "../model/serviceRequirements";
+import type { ServiceRequirement } from "../model/serviceRequirements";
 import { useAddNode } from "../model/useAddNode";
+
+// ─── 위자드 단계 ─────────────────────────────────────────────
+type WizardStep = "category" | "service" | "requirement" | "auth";
 
 const allNodeEntries = Object.values(NODE_REGISTRY);
 
@@ -21,6 +28,326 @@ const parseSourceNodeId = (placeholderId: string): string | undefined => {
   return placeholderId.replace("placeholder-", "");
 };
 
+// ─── Step 1: 카테고리 선택 그리드 ────────────────────────────
+const CategoryGrid = ({
+  searchQuery,
+  setSearchQuery,
+  onSelect,
+}: {
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  onSelect: (meta: NodeMeta) => void;
+}) => {
+  const filtered = searchQuery
+    ? allNodeEntries.filter((meta) => meta.label.includes(searchQuery))
+    : allNodeEntries;
+
+  return (
+    <Box
+      bg="white"
+      border="1px solid"
+      borderColor="gray.200"
+      borderRadius="2xl"
+      boxShadow="lg"
+      p={12}
+      maxW="820px"
+      w="full"
+    >
+      <Box position="relative" mb={6}>
+        <Input
+          placeholder="검색"
+          bg="white"
+          border="1px solid"
+          borderColor="gray.500"
+          borderRadius="full"
+          pl={12}
+          pr={12}
+          py={2}
+          fontSize="md"
+          fontWeight="bold"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <Box
+          position="absolute"
+          top="50%"
+          right={6}
+          transform="translateY(-50%)"
+          pointerEvents="none"
+        >
+          <Icon as={MdSearch} boxSize={8} color="gray.600" />
+        </Box>
+      </Box>
+
+      <Grid templateColumns="repeat(7, 1fr)" gap={12} p={6}>
+        {filtered.map((meta) => (
+          <VStack
+            key={meta.type}
+            gap={1}
+            cursor="pointer"
+            minH="80px"
+            _hover={{ opacity: 0.7 }}
+            transition="opacity 150ms ease"
+            onClick={() => onSelect(meta)}
+          >
+            <Box
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              h="64px"
+            >
+              <Icon as={meta.iconComponent} boxSize={16} color={meta.color} />
+            </Box>
+            <Text fontSize="xs" fontWeight="medium" textAlign="center">
+              {meta.label}
+            </Text>
+          </VStack>
+        ))}
+      </Grid>
+    </Box>
+  );
+};
+
+// ─── Step 2: 서비스 선택 ─────────────────────────────────────
+const ServiceGrid = ({
+  selectedMeta,
+  services,
+  onSelect,
+  onBack,
+}: {
+  selectedMeta: NodeMeta;
+  services: ServiceOption[];
+  onSelect: (service: ServiceOption) => void;
+  onBack: () => void;
+}) => (
+  <Box display="flex" gap={12} alignItems="flex-start">
+    {/* 선택된 카테고리 아이콘 */}
+    <VStack gap={2} flexShrink={0} w="100px">
+      <Icon
+        as={selectedMeta.iconComponent}
+        boxSize={20}
+        color={selectedMeta.color}
+      />
+      <Text fontSize="md" fontWeight="bold" textAlign="center">
+        {selectedMeta.label}
+      </Text>
+    </VStack>
+
+    {/* 서비스 목록 */}
+    <Box
+      bg="white"
+      border="1px solid"
+      borderColor="gray.200"
+      borderRadius="2xl"
+      boxShadow="lg"
+      p={12}
+      minW="420px"
+    >
+      <Text fontSize="xl" fontWeight="bold" mb={6}>
+        서비스를 선택해주세요.
+      </Text>
+
+      <Grid
+        templateColumns="repeat(auto-fill, minmax(80px, 1fr))"
+        gap={8}
+        p={4}
+      >
+        {services.map((svc) => (
+          <VStack
+            key={svc.value}
+            gap={1}
+            cursor="pointer"
+            minH="80px"
+            _hover={{ opacity: 0.7 }}
+            transition="opacity 150ms ease"
+            onClick={() => onSelect(svc)}
+          >
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              h="64px"
+            >
+              <Icon as={svc.iconComponent} boxSize={16} />
+            </Box>
+            <Text fontSize="xs" fontWeight="medium" textAlign="center">
+              {svc.label}
+            </Text>
+          </VStack>
+        ))}
+      </Grid>
+
+      <Box
+        mt={4}
+        cursor="pointer"
+        onClick={onBack}
+        display="inline-flex"
+        alignItems="center"
+        gap={1}
+        color="gray.500"
+        _hover={{ color: "black" }}
+        transition="color 150ms ease"
+      >
+        <Icon as={MdArrowBack} boxSize={5} />
+        <Text fontSize="sm">뒤로</Text>
+      </Box>
+    </Box>
+  </Box>
+);
+
+// ─── Step 3: 요구사항 선택 ───────────────────────────────────
+const RequirementPanel = ({
+  selectedService,
+  requirements,
+  title,
+  onSelect,
+  onBack,
+}: {
+  selectedService: ServiceOption;
+  requirements: ServiceRequirement[];
+  title: string;
+  onSelect: (req: ServiceRequirement) => void;
+  onBack: () => void;
+}) => (
+  <Box display="flex" gap={12} alignItems="flex-start">
+    {/* 선택된 서비스 아이콘 — 캔버스 노드 위치의 아이콘과 동일 */}
+    <VStack gap={2} flexShrink={0} w="100px">
+      <Icon as={selectedService.iconComponent} boxSize={20} />
+      <Text fontSize="md" fontWeight="bold" textAlign="center">
+        {selectedService.label}
+      </Text>
+    </VStack>
+
+    {/* 요구사항 목록 */}
+    <Box
+      bg="white"
+      border="1px solid"
+      borderColor="gray.200"
+      borderRadius="2xl"
+      boxShadow="lg"
+      p={12}
+      minW="420px"
+    >
+      <Text fontSize="xl" fontWeight="bold" mb={6}>
+        {title}
+      </Text>
+
+      <VStack gap={6} align="stretch" p={6}>
+        {requirements.map((req) => (
+          <Box
+            key={req.id}
+            display="flex"
+            gap={3}
+            alignItems="center"
+            cursor="pointer"
+            bg="white"
+            px={6}
+            py={3}
+            borderRadius="3xl"
+            opacity={0.8}
+            _hover={{ opacity: 1, bg: "gray.50" }}
+            transition="opacity 150ms ease, background 150ms ease"
+            onClick={() => onSelect(req)}
+          >
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              p={3}
+              flexShrink={0}
+            >
+              <Icon as={req.iconComponent} boxSize={6} />
+            </Box>
+            <Text fontSize="md" fontWeight="bold">
+              {req.label}
+            </Text>
+          </Box>
+        ))}
+      </VStack>
+
+      <Box
+        mt={4}
+        cursor="pointer"
+        onClick={onBack}
+        display="inline-flex"
+        alignItems="center"
+        gap={1}
+        color="gray.500"
+        _hover={{ color: "black" }}
+        transition="color 150ms ease"
+      >
+        <Icon as={MdArrowBack} boxSize={5} />
+        <Text fontSize="sm">뒤로</Text>
+      </Box>
+    </Box>
+  </Box>
+);
+
+// ─── Step 4: 인증 요청 ──────────────────────────────────────
+const AuthPanel = ({
+  selectedService,
+  onAuth,
+  onBack,
+}: {
+  selectedService: ServiceOption;
+  onAuth: () => void;
+  onBack: () => void;
+}) => (
+  <Box display="flex" gap={12} alignItems="flex-start">
+    <VStack gap={2} flexShrink={0} w="100px">
+      <Icon as={selectedService.iconComponent} boxSize={20} />
+      <Text fontSize="md" fontWeight="bold" textAlign="center">
+        {selectedService.label}
+      </Text>
+    </VStack>
+
+    <Box
+      bg="white"
+      border="1px solid"
+      borderColor="gray.200"
+      borderRadius="2xl"
+      boxShadow="lg"
+      p={12}
+      minW="600px"
+    >
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={6}
+      >
+        <Text fontSize="xl" fontWeight="bold">
+          인증이 필요합니다.
+        </Text>
+        <Box cursor="pointer" onClick={onBack}>
+          <Icon as={MdArrowBack} boxSize={6} />
+        </Box>
+      </Box>
+
+      <Box
+        border="1px solid"
+        borderColor="gray.200"
+        display="flex"
+        gap={2}
+        alignItems="center"
+        justifyContent="center"
+        px={16}
+        py={3}
+        cursor="pointer"
+        _hover={{ bg: "gray.50" }}
+        transition="background 150ms ease"
+        onClick={onAuth}
+      >
+        <Text fontSize="md" fontWeight="semibold">
+          구글 계정으로 인증하기
+        </Text>
+      </Box>
+    </Box>
+  </Box>
+);
+
+// ─── 메인 ServiceSelectionPanel ──────────────────────────────
 export const ServiceSelectionPanel = () => {
   const activePlaceholder = useWorkflowStore((s) => s.activePlaceholder);
   const setActivePlaceholder = useWorkflowStore((s) => s.setActivePlaceholder);
@@ -29,93 +356,236 @@ export const ServiceSelectionPanel = () => {
   const onConnect = useWorkflowStore((s) => s.onConnect);
   const { addNode } = useAddNode();
 
+  const [step, setStep] = useState<WizardStep>("category");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMeta, setSelectedMeta] = useState<NodeMeta | null>(null);
+  const [selectedService, setSelectedService] = useState<ServiceOption | null>(
+    null,
+  );
+  const [placedNodeId, setPlacedNodeId] = useState<string | null>(null);
+  const [selectedRequirementPreset, setSelectedRequirementPreset] = useState<
+    Record<string, unknown> | undefined
+  >(undefined);
+
+  const resetWizard = useCallback(() => {
+    setStep("category");
+    setSearchQuery("");
+    setSelectedMeta(null);
+    setSelectedService(null);
+    setPlacedNodeId(null);
+    setSelectedRequirementPreset(undefined);
+    setActivePlaceholder(null);
+  }, [setActivePlaceholder]);
+
+  /**
+   * 노드를 캔버스에 배치하고, placeholder 관계(start/end/엣지)를 설정한다.
+   * 서비스 선택 시점에 호출된다.
+   */
+  const placeNode = useCallback(
+    (meta: NodeMeta, service: ServiceOption) => {
+      if (!activePlaceholder) return null;
+
+      const nodeId = addNode(meta.type, {
+        position: activePlaceholder.position,
+      });
+
+      // config에 service 반영
+      const store = useWorkflowStore.getState();
+      const node = store.nodes.find((n) => n.id === nodeId);
+      if (node) {
+        store.updateNodeConfig(nodeId, {
+          ...node.data.config,
+          service: service.value as never,
+        });
+      }
+
+      // placeholder 관계 설정
+      const sourceNodeId = parseSourceNodeId(activePlaceholder.id);
+
+      if (activePlaceholder.id === "placeholder-start") {
+        setStartNodeId(nodeId);
+      } else if (activePlaceholder.id === "placeholder-end") {
+        setEndNodeId(nodeId);
+      }
+
+      if (sourceNodeId) {
+        onConnect({
+          source: sourceNodeId,
+          target: nodeId,
+          sourceHandle: null,
+          targetHandle: null,
+        });
+      }
+
+      return nodeId;
+    },
+    [activePlaceholder, addNode, onConnect, setStartNodeId, setEndNodeId],
+  );
+
+  /**
+   * 요구사항/인증 완료 후 config preset 반영하고 위자드 종료.
+   */
+  const finalizeConfig = useCallback(
+    (configPreset?: Record<string, unknown>) => {
+      if (!placedNodeId) return;
+
+      if (configPreset) {
+        const store = useWorkflowStore.getState();
+        const node = store.nodes.find((n) => n.id === placedNodeId);
+        if (node) {
+          store.updateNodeConfig(placedNodeId, {
+            ...node.data.config,
+            ...configPreset,
+          });
+        }
+      }
+
+      resetWizard();
+    },
+    [placedNodeId, resetWizard],
+  );
 
   if (!activePlaceholder) return null;
 
-  const filtered = searchQuery
-    ? allNodeEntries.filter((meta) => meta.label.includes(searchQuery))
-    : allNodeEntries;
+  // ── Step 1: 카테고리 선택 ──────────────────────────────────
+  const handleCategorySelect = (meta: NodeMeta) => {
+    const serviceGroup = CATEGORY_SERVICE_MAP[meta.type];
 
-  const handleSelect = (type: NodeType) => {
-    const nodeId = addNode(type, { position: activePlaceholder.position });
-    const sourceNodeId = parseSourceNodeId(activePlaceholder.id);
-
-    if (activePlaceholder.id === "placeholder-start") {
-      setStartNodeId(nodeId);
-    } else if (activePlaceholder.id === "placeholder-end") {
-      setEndNodeId(nodeId);
-    }
-
-    if (sourceNodeId) {
-      onConnect({
-        source: sourceNodeId,
-        target: nodeId,
-        sourceHandle: null,
-        targetHandle: null,
+    if (!serviceGroup || serviceGroup.services.length === 0) {
+      // 서비스 개념이 없는 노드 (processing, AI, web-scraping) → 바로 배치
+      if (!activePlaceholder) return;
+      const nodeId = addNode(meta.type, {
+        position: activePlaceholder.position,
       });
+
+      const sourceNodeId = parseSourceNodeId(activePlaceholder.id);
+      if (activePlaceholder.id === "placeholder-start") setStartNodeId(nodeId);
+      else if (activePlaceholder.id === "placeholder-end") setEndNodeId(nodeId);
+      if (sourceNodeId) {
+        onConnect({
+          source: sourceNodeId,
+          target: nodeId,
+          sourceHandle: null,
+          targetHandle: null,
+        });
+      }
+
+      resetWizard();
+      return;
     }
 
-    setActivePlaceholder(null);
-    setSearchQuery("");
+    // 서비스가 있는 카테고리 → Step 2로
+    setSelectedMeta(meta);
+    setStep("service");
+  };
+
+  // ── Step 2: 서비스 선택 → 노드 배치 ───────────────────────
+  const handleServiceSelect = (service: ServiceOption) => {
+    if (!selectedMeta) return;
+
+    const nodeId = placeNode(selectedMeta, service);
+    if (!nodeId) return;
+
+    setSelectedService(service);
+    setPlacedNodeId(nodeId);
+
+    // 요구사항이 있으면 Step 3, 없으면 완료
+    const reqGroup = SERVICE_REQUIREMENTS[selectedMeta.type];
+    if (reqGroup) {
+      setStep("requirement");
+    } else {
+      resetWizard();
+    }
+  };
+
+  // ── Step 3: 요구사항 선택 ─────────────────────────────────
+  const handleRequirementSelect = (req: ServiceRequirement) => {
+    if (!selectedMeta) return;
+
+    const serviceGroup = CATEGORY_SERVICE_MAP[selectedMeta.type];
+    if (serviceGroup?.requiresAuth) {
+      // 인증 필요 → Step 4
+      setStep("auth");
+      // 요구사항 configPreset은 인증 완료 후 함께 반영
+      // selectedRequirement를 임시 저장
+      setSelectedRequirementPreset(req.configPreset);
+    } else {
+      finalizeConfig(req.configPreset);
+    }
+  };
+
+  // ── Step 4: 인증 ──────────────────────────────────────────
+  const handleAuth = () => {
+    // TODO: 실제 OAuth 인증 흐름 연동
+    finalizeConfig(selectedRequirementPreset);
+  };
+
+  // ── 제목 결정 ──────────────────────────────────────────────
+  const getTitle = (): string => {
+    switch (step) {
+      case "category":
+        return "어디에서 어디로 갈까요?";
+      case "service":
+        return "가이드라인 제목";
+      case "requirement":
+        return "가이드라인 제목";
+      case "auth":
+        return "인증은 가장 처음 한 번만 진행됩니다.";
+    }
   };
 
   return (
     <Box
       position="absolute"
-      top="50%"
-      left="50%"
-      transform="translateY(-50%)"
+      inset={0}
       zIndex={20}
-      bg="gray.100"
-      borderRadius="2xl"
-      p={6}
-      w="480px"
-      boxShadow="lg"
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      pointerEvents="auto"
     >
-      <Text fontSize="lg" fontWeight="bold" mb={4}>
-        서비스를 선택해주세요.
+      <Text fontSize="2xl" fontWeight="bold" mb={6} textAlign="center">
+        {getTitle()}
       </Text>
 
-      <Box position="relative" mb={4}>
-        <Input
-          placeholder="검색"
-          bg="white"
-          borderRadius="lg"
-          pr={10}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+      {step === "category" && (
+        <CategoryGrid
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          onSelect={handleCategorySelect}
         />
-        <Box
-          position="absolute"
-          top="50%"
-          right={3}
-          transform="translateY(-50%)"
-          pointerEvents="none"
-        >
-          <Icon as={MdSearch} boxSize={5} color="gray.400" />
-        </Box>
-      </Box>
+      )}
 
-      <Grid templateColumns="repeat(5, 1fr)" gap={4}>
-        {filtered.map((meta) => (
-          <VStack
-            key={meta.type}
-            gap={1}
-            cursor="pointer"
-            p={2}
-            borderRadius="lg"
-            _hover={{ bg: "gray.200" }}
-            transition="background 150ms ease"
-            onClick={() => handleSelect(meta.type)}
-          >
-            <Icon as={meta.iconComponent} boxSize={8} color={meta.color} />
-            <Text fontSize="xs" textAlign="center">
-              {meta.label}
-            </Text>
-          </VStack>
-        ))}
-      </Grid>
+      {step === "service" && selectedMeta && (
+        <ServiceGrid
+          selectedMeta={selectedMeta}
+          services={CATEGORY_SERVICE_MAP[selectedMeta.type]!.services}
+          onSelect={handleServiceSelect}
+          onBack={() => {
+            setStep("category");
+            setSelectedMeta(null);
+          }}
+        />
+      )}
+
+      {step === "requirement" && selectedMeta && selectedService && (
+        <RequirementPanel
+          selectedService={selectedService}
+          requirements={SERVICE_REQUIREMENTS[selectedMeta.type]!.requirements}
+          title={SERVICE_REQUIREMENTS[selectedMeta.type]!.title}
+          onSelect={handleRequirementSelect}
+          onBack={() => setStep("service")}
+        />
+      )}
+
+      {step === "auth" && selectedService && (
+        <AuthPanel
+          selectedService={selectedService}
+          onAuth={handleAuth}
+          onBack={() => setStep("requirement")}
+        />
+      )}
     </Box>
   );
 };
