@@ -12,11 +12,12 @@ import { useWorkflowStore } from "@/shared";
  */
 export const InputPanel = () => {
   const activePanelNodeId = useWorkflowStore((s) => s.activePanelNodeId);
+  const wizardStep = useWorkflowStore((s) => s.wizardStep);
   const nodes = useWorkflowStore((s) => s.nodes);
   const edges = useWorkflowStore((s) => s.edges);
   const closePanel = useWorkflowStore((s) => s.closePanel);
 
-  const isOpen = Boolean(activePanelNodeId);
+  const isOpen = Boolean(activePanelNodeId) && wizardStep === null;
 
   // 이전 노드(들) 찾기 — 현재 노드로 들어오는 엣지의 source
   const sourceNodes = activePanelNodeId
