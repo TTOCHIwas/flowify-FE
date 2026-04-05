@@ -5,8 +5,8 @@ import { Box, Icon, Text } from "@chakra-ui/react";
 import {
   CATEGORY_SERVICE_MAP,
   SERVICE_REQUIREMENTS,
-  type ServiceRequirement,
 } from "@/features/add-node";
+import type { ServiceRequirement } from "@/features/add-node";
 import { PanelRenderer } from "@/features/configure-node";
 import { useWorkflowStore } from "@/shared";
 
