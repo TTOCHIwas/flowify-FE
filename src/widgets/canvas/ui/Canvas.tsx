@@ -31,6 +31,8 @@ import {
   TriggerNode,
   WebScrapingNode,
 } from "@/entities/node";
+import type { NodeType } from "@/entities/node";
+import { isDataTypeCompatible } from "@/entities/node";
 import { getLeafNodeIds, useWorkflowStore } from "@/shared";
 
 const NODE_GAP_X = 96;
@@ -56,7 +58,9 @@ const getNodeCenterY = (
 ) =>
   getCenterYFromTop(node.position.y, node.measured?.height ?? fallbackHeight);
 
-const nodeTypes: NodeTypes = {
+type CanvasNodeType = NodeType | "placeholder" | "creation-method";
+
+const nodeTypes = {
   communication: CommunicationNode,
   storage: StorageNode,
   spreadsheet: SpreadsheetNode,
@@ -74,7 +78,7 @@ const nodeTypes: NodeTypes = {
   llm: LLMNode,
   placeholder: PlaceholderNode,
   "creation-method": CreationMethodNode,
-};
+} satisfies Record<CanvasNodeType, NodeTypes[string]>;
 
 export const Canvas = () => {
   const nodes = useWorkflowStore((s) => s.nodes);
@@ -138,6 +142,27 @@ export const Canvas = () => {
   const handleSelectManual = useCallback(() => {
     setCreationMethod("manual");
   }, [setCreationMethod]);
+
+  const handleConnect = useCallback(
+    (connection: Parameters<typeof onConnect>[0]) => {
+      const sourceNode = nodes.find((node) => node.id === connection.source);
+      const targetNode = nodes.find((node) => node.id === connection.target);
+
+      if (sourceNode && targetNode) {
+        const compatible = isDataTypeCompatible(
+          sourceNode.data.outputTypes,
+          targetNode.data.inputTypes,
+        );
+
+        if (!compatible) {
+          return;
+        }
+      }
+
+      onConnect(connection);
+    },
+    [nodes, onConnect],
+  );
 
   const nodesWithPlaceholders = useMemo(() => {
     const result: Node[] = [...nodes];
@@ -294,7 +319,7 @@ export const Canvas = () => {
       nodeTypes={nodeTypes}
       onNodesChange={handleNodesChange}
       onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
+      onConnect={handleConnect}
       onNodeClick={handleNodeClick}
       onPaneClick={handlePaneClick}
       panOnDrag={!isCanvasLocked}
