@@ -613,6 +613,71 @@ const handleBackToRequirement = () => {
 };
 ```
 
+### 8.3 비정상 종료 시 위자드 상태 정리
+
+위자드 진행 중 happy path가 아닌 경로로 이탈하는 케이스에서 `wizardStep`, `wizardConfigPreset`, `wizardSourcePlaceholder`가 stale 상태로 남지 않도록 기존 액션에 정리 로직을 추가한다.
+
+#### 케이스 1: 위자드 중 노드 삭제
+
+사용자가 위자드 진행 중인 노드를 삭제하면(예: 키보드 Delete), `removeNode`가 호출된다. 삭제 대상이 현재 위자드 대상 노드인 경우 위자드 상태를 함께 정리해야 한다.
+
+```typescript
+// removeNode 액션 내부에 추가
+removeNode: (id) =>
+  set((state) => {
+    // ... 기존 노드/엣지 삭제 로직 ...
+
+    // 기존: activePanelNodeId 정리
+    if (state.activePanelNodeId && removeTargets.has(state.activePanelNodeId)) {
+      state.activePanelNodeId = null;
+
+      // 추가: 위자드 진행 중이었다면 위자드 상태도 정리
+      if (state.wizardStep !== null) {
+        state.wizardStep = null;
+        state.wizardConfigPreset = null;
+        state.wizardSourcePlaceholder = null;
+      }
+    }
+
+    // ... 기존 startNodeId/endNodeId 정리 ...
+  }),
+```
+
+#### 케이스 2: 위자드 중 패널 강제 닫기 (닫기 버튼)
+
+6.6절에서 정의한 `handleClose`가 이 케이스를 처리한다. OutputPanel의 닫기 버튼은 `closePanel()` 호출 전에 위자드 상태를 먼저 초기화한다.
+
+#### 케이스 3: 위자드 중 다른 노드 클릭 (`openPanel` 재호출)
+
+사용자가 위자드 진행 중 캔버스의 다른 노드를 클릭하면 `openPanel(다른NodeId)`가 호출된다. `activePanelNodeId`가 바뀌면서 위자드 컨텍스트가 유실된다.
+
+```typescript
+// openPanel 액션 수정
+openPanel: (nodeId) =>
+  set((state) => {
+    // 다른 노드로 전환 시 진행 중인 위자드 정리
+    if (state.wizardStep !== null && state.activePanelNodeId !== nodeId) {
+      state.wizardStep = null;
+      state.wizardConfigPreset = null;
+      state.wizardSourcePlaceholder = null;
+    }
+    state.activePanelNodeId = nodeId;
+  }),
+```
+
+#### 케이스 4: 에디터 이탈 (`resetEditor`)
+
+`resetEditor`는 `initialState`를 스프레드하므로, 초기 상태에 `wizardStep: null`, `wizardConfigPreset: null`, `wizardSourcePlaceholder: null`이 포함되면 자동으로 정리된다. 추가 변경 불필요.
+
+#### 정리 규칙 요약
+
+| 트리거 | 조건 | 정리 대상 |
+|--------|------|-----------|
+| `removeNode(id)` | 삭제 대상이 `activePanelNodeId`이고 `wizardStep !== null` | `wizardStep`, `wizardConfigPreset`, `wizardSourcePlaceholder` → `null` |
+| `closePanel()` (OutputPanel 닫기 버튼) | `wizardStep !== null` | `wizardStep`, `wizardConfigPreset` → `null` (handleClose에서 처리) |
+| `openPanel(nodeId)` | `wizardStep !== null`이고 `nodeId !== activePanelNodeId` | `wizardStep`, `wizardConfigPreset`, `wizardSourcePlaceholder` → `null` |
+| `resetEditor()` | 항상 | `initialState` 스프레드로 자동 정리 |
+
 ---
 
 ## 9. 파일별 변경 요약
@@ -624,6 +689,8 @@ const handleBackToRequirement = () => {
 | State 추가 | `wizardStep`, `wizardConfigPreset`, `wizardSourcePlaceholder` |
 | Actions 추가 | `setWizardStep`, `setWizardConfigPreset`, `setWizardSourcePlaceholder` |
 | initialState 추가 | 3개 필드 `null` 초기값 |
+| `removeNode` 수정 | 삭제 대상이 위자드 대상 노드일 때 위자드 상태 정리 |
+| `openPanel` 수정 | 다른 노드로 전환 시 진행 중인 위자드 상태 정리 |
 
 ### 9.2 `src/features/add-node/ui/ServiceSelectionPanel.tsx`
 
