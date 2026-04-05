@@ -225,7 +225,7 @@ setWizardSourcePlaceholder: (placeholder) =>
 
 ### 4.5 resetEditor 변경
 
-`resetEditor`는 이미 `initialState`를 스프레드하므로, 초기 상태에 `wizardStep: null`, `wizardConfigPreset: null`이 포함되면 자동으로 초기화된다. 추가 변경 불필요.
+`resetEditor`는 이미 `initialState`를 스프레드하므로, 초기 상태에 `wizardStep: null`, `wizardConfigPreset: null`, `wizardSourcePlaceholder: null`이 포함되면 자동으로 초기화된다. 추가 변경 불필요.
 
 ---
 
@@ -250,7 +250,7 @@ setWizardSourcePlaceholder: (placeholder) =>
 |-----------------|------|
 | `CategoryGrid` | Step 1 카테고리 선택 UI |
 | `ServiceGrid` | Step 2 서비스 선택 UI |
-| `placeNode()` | 노드 배치 + 관계 설정 |
+| `placeNode(meta, service?)` | 노드 배치 + 관계 설정 (service optional — 서비스 없는 노드도 재사용) |
 | `handleCategorySelect()` | 카테고리 선택 핸들러 |
 | `resetWizard()` | 로컬 상태 초기화 |
 
@@ -269,7 +269,7 @@ type WizardStep = "category" | "service";
 현재 구현은 서비스가 없는 노드를 무조건 "바로 배치 후 종료"로 처리하지만, `web-scraping`처럼 서비스는 없으면서 요구사항은 있는 노드가 존재한다. "서비스 없음"과 "요구사항 없음"을 분리해야 한다.
 
 ```typescript
-// 변경 후: 서비스 없는 노드도 요구사항 유무를 확인
+// 변경 후: placeNode 재사용 + 서비스 없는 노드도 요구사항 유무를 확인
 const handleCategorySelect = (meta: NodeMeta) => {
   const serviceGroup = CATEGORY_SERVICE_MAP[meta.type];
 
@@ -280,16 +280,9 @@ const handleCategorySelect = (meta: NodeMeta) => {
     return;
   }
 
-  // 서비스 없는 노드 → 바로 배치
-  if (!activePlaceholder) return;
-  const nodeId = addNode(meta.type, { position: activePlaceholder.position });
-
-  const sourceNodeId = parseSourceNodeId(activePlaceholder.id);
-  if (activePlaceholder.id === "placeholder-start") setStartNodeId(nodeId);
-  else if (activePlaceholder.id === "placeholder-end") setEndNodeId(nodeId);
-  if (sourceNodeId) {
-    onConnect({ source: sourceNodeId, target: nodeId, sourceHandle: null, targetHandle: null });
-  }
+  // 서비스 없는 노드 → placeNode로 바로 배치 (service 생략)
+  const nodeId = placeNode(meta);
+  if (!nodeId) return;
 
   // 요구사항 확인: 서비스 없어도 요구사항이 있을 수 있음 (예: web-scraping)
   const reqGroup = SERVICE_REQUIREMENTS[meta.type];
@@ -298,11 +291,10 @@ const handleCategorySelect = (meta: NodeMeta) => {
     setWizardSourcePlaceholder(activePlaceholder);
     openPanel(nodeId);
     setWizardStep("requirement");
-    setActivePlaceholder(null);
-  } else {
-    // C) 서비스 없음 + 요구사항 없음 → 종료
-    resetWizard();
   }
+
+  // C) 서비스 없음 + 요구사항 없음 → 종료 (B 경로도 오버레이는 닫아야 함)
+  resetWizard();
 };
 ```
 
@@ -405,35 +397,42 @@ OutputPanel 내부에서만 사용되는 **로컬 컴포넌트**로 정의한다
 const WizardRequirementContent = ({
   requirements,
   onSelect,
+  onBack,
 }: {
   requirements: ServiceRequirement[];
   onSelect: (req: ServiceRequirement) => void;
+  onBack: () => void;
 }) => (
-  <VStack gap={6} align="stretch" p={6}>
-    {requirements.map((req) => (
-      <Box
-        key={req.id}
-        display="flex"
-        gap={3}
-        alignItems="center"
-        cursor="pointer"
-        px={6}
-        py={3}
-        borderRadius="3xl"
-        opacity={0.8}
-        _hover={{ opacity: 1, bg: "gray.50" }}
-        transition="opacity 150ms ease, background 150ms ease"
-        onClick={() => onSelect(req)}
-      >
-        <Box display="flex" alignItems="center" justifyContent="center" p={3}>
-          <Icon as={req.iconComponent} boxSize={6} />
+  <Box p={6}>
+    <Box mb={4} cursor="pointer" display="inline-flex" alignItems="center" onClick={onBack}>
+      <Text fontSize="sm" color="text.secondary">뒤로</Text>
+    </Box>
+
+    <Box display="flex" flexDirection="column" gap={4}>
+      {requirements.map((req) => (
+        <Box
+          key={req.id}
+          display="flex"
+          gap={3}
+          alignItems="center"
+          cursor="pointer"
+          px={6}
+          py={4}
+          borderRadius="3xl"
+          _hover={{ bg: "gray.50" }}
+          transition="background 150ms ease"
+          onClick={() => onSelect(req)}
+        >
+          <Box display="flex" alignItems="center" justifyContent="center" p={3}>
+            <Icon as={req.iconComponent} boxSize={6} />
+          </Box>
+          <Text fontSize="md" fontWeight="bold">
+            {req.label}
+          </Text>
         </Box>
-        <Text fontSize="md" fontWeight="bold">
-          {req.label}
-        </Text>
-      </Box>
-    ))}
-  </VStack>
+      ))}
+    </Box>
+  </Box>
 );
 ```
 
@@ -445,10 +444,16 @@ const WizardRequirementContent = ({
  */
 const WizardAuthContent = ({
   onAuth,
+  onBack,
 }: {
   onAuth: () => void;
+  onBack: () => void;
 }) => (
   <Box p={6}>
+    <Box mb={4} cursor="pointer" display="inline-flex" alignItems="center" onClick={onBack}>
+      <Text fontSize="sm" color="text.secondary">뒤로</Text>
+    </Box>
+
     <Text fontSize="md" mb={6}>
       인증은 가장 처음 한 번만 진행됩니다.
     </Text>
@@ -476,10 +481,16 @@ const WizardAuthContent = ({
 ### 6.5 OutputPanel 내부 핸들러
 
 ```typescript
+// 위자드 종료 헬퍼 — 3필드 일괄 정리
+const finishWizard = () => {
+  setWizardConfigPreset(null);
+  setWizardStep(null);
+  setWizardSourcePlaceholder(null);
+};
+
 // 요구사항 선택 시
 const handleRequirementSelect = (req: ServiceRequirement) => {
-  const activeNode = nodes.find((n) => n.id === activePanelNodeId);
-  if (!activeNode) return;
+  if (!activePanelNodeId || !activeNode) return;
 
   const serviceGroup = CATEGORY_SERVICE_MAP[activeNode.data.type];
 
@@ -487,30 +498,50 @@ const handleRequirementSelect = (req: ServiceRequirement) => {
     // configPreset 임시 저장 후 인증 단계로
     setWizardConfigPreset(req.configPreset);
     setWizardStep("auth");
-  } else {
-    // 인증 불필요 → configPreset 바로 적용 후 위자드 종료
-    updateNodeConfig(activePanelNodeId, {
-      ...activeNode.data.config,
-      ...req.configPreset,
-    });
-    setWizardStep(null);
+    return;
   }
+
+  // 인증 불필요 → configPreset 바로 적용 후 위자드 종료
+  updateNodeConfig(activePanelNodeId, {
+    ...activeNode.data.config,
+    ...req.configPreset,
+  });
+  finishWizard();
 };
 
 // 인증 완료 시
 const handleAuth = () => {
   // TODO: 실제 OAuth 인증 흐름 연동
-  if (activePanelNodeId && wizardConfigPreset) {
-    const activeNode = nodes.find((n) => n.id === activePanelNodeId);
-    if (activeNode) {
-      updateNodeConfig(activePanelNodeId, {
-        ...activeNode.data.config,
-        ...wizardConfigPreset,
-      });
-    }
+  if (!activePanelNodeId || !wizardConfigPreset) return;
+
+  const currentNode = nodes.find((node) => node.id === activePanelNodeId);
+  if (currentNode) {
+    updateNodeConfig(activePanelNodeId, {
+      ...currentNode.data.config,
+      ...wizardConfigPreset,
+    });
   }
-  setWizardConfigPreset(null);
+
+  finishWizard();
+};
+
+// 요구사항 → 서비스 선택으로 뒤로가기
+const handleBackToService = () => {
+  const sourcePlaceholder = wizardSourcePlaceholder;
+
+  if (activePanelNodeId) removeNode(activePanelNodeId);
+
   setWizardStep(null);
+  setWizardConfigPreset(null);
+  closePanel();
+  setActivePlaceholder(sourcePlaceholder);
+  setWizardSourcePlaceholder(null);
+};
+
+// 인증 → 요구사항으로 뒤로가기
+const handleBackToRequirement = () => {
+  setWizardStep("requirement");
+  setWizardConfigPreset(null);
 };
 ```
 
@@ -602,8 +633,7 @@ const requirementGroup = activeNode
         │       │
         │       │ 인증 완료
         │       │ → updateNodeConfig(nodeId, merged config)
-        │       │ → setWizardConfigPreset(null)
-        │       │ → setWizardStep(null)
+        │       │ → finishWizard()  // wizardStep, wizardConfigPreset, wizardSourcePlaceholder → null
         │       ▼
         │   ┌──────────────────────────────────────────────────────┐
         │   │ 일반 패널 모드 (OutputPanel — PanelRenderer)          │
@@ -613,7 +643,7 @@ const requirementGroup = activeNode
         │
         └── 인증 불필요
             → updateNodeConfig(nodeId, req.configPreset)
-            → setWizardStep(null)
+            → finishWizard()
             ▼
           ┌────────────────────────────────────────────────────────┐
           │ 일반 패널 모드 (OutputPanel — PanelRenderer)            │

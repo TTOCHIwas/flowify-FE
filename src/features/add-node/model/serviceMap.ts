@@ -37,7 +37,10 @@ export interface CategoryServiceGroup {
   categoryLabel: string;
   /** 이 카테고리에 속한 서비스 목록 */
   services: ServiceOption[];
-  /** OAuth 인증 필요 여부 */
+  /**
+   * OAuth 인증 필요 여부.
+   * 인증 분기의 단일 출처 — OutputPanel에서 이 값을 참조한다.
+   */
   requiresAuth: boolean;
 }
 
