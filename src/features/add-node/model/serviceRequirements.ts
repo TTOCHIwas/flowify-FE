@@ -29,8 +29,6 @@ export interface ServiceRequirement {
 
 export interface ServiceRequirementGroup {
   title: string;
-  /** OAuth 인증이 필요한 서비스인지 */
-  requiresAuth: boolean;
   requirements: ServiceRequirement[];
 }
 
@@ -43,7 +41,6 @@ export const SERVICE_REQUIREMENTS: Partial<
 > = {
   storage: {
     title: "어떻게 사용하시겠어요?",
-    requiresAuth: true,
     requirements: [
       {
         id: "storage-read",
@@ -68,7 +65,6 @@ export const SERVICE_REQUIREMENTS: Partial<
 
   communication: {
     title: "어떻게 사용하시겠어요?",
-    requiresAuth: true,
     requirements: [
       {
         id: "comm-send",
@@ -93,7 +89,6 @@ export const SERVICE_REQUIREMENTS: Partial<
 
   spreadsheet: {
     title: "어떻게 사용하시겠어요?",
-    requiresAuth: true,
     requirements: [
       {
         id: "sheet-read",
@@ -118,7 +113,6 @@ export const SERVICE_REQUIREMENTS: Partial<
 
   calendar: {
     title: "어떻게 사용하시겠어요?",
-    requiresAuth: true,
     requirements: [
       {
         id: "cal-read",
@@ -137,7 +131,6 @@ export const SERVICE_REQUIREMENTS: Partial<
 
   "web-scraping": {
     title: "어떤 데이터를 수집하시겠어요?",
-    requiresAuth: false,
     requirements: [
       {
         id: "scrape-page",
