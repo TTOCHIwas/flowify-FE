@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { MdArrowBack, MdSearch } from "react-icons/md";
+import { useCallback, useEffect, useState } from "react";
+import { MdArrowBack, MdCancel, MdSearch } from "react-icons/md";
 
 import { Box, Grid, Icon, Input, Text, VStack } from "@chakra-ui/react";
 
@@ -9,10 +9,13 @@ import { useWorkflowStore } from "@/shared";
 
 import { CATEGORY_SERVICE_MAP } from "../model/serviceMap";
 import type { ServiceOption } from "../model/serviceMap";
-import { SERVICE_REQUIREMENTS } from "../model/serviceRequirements";
+import {
+  SERVICE_REQUIREMENTS,
+  type ServiceRequirement,
+} from "../model/serviceRequirements";
 import { useAddNode } from "../model/useAddNode";
 
-type WizardStep = "category" | "service";
+type WizardStep = "category" | "service" | "requirement" | "auth";
 
 const allNodeEntries = Object.values(NODE_REGISTRY);
 
@@ -191,6 +194,115 @@ const ServiceGrid = ({
   </Box>
 );
 
+const RequirementList = ({
+  requirements,
+  onSelect,
+  onBack,
+}: {
+  requirements: ServiceRequirement[];
+  onSelect: (requirement: ServiceRequirement) => void;
+  onBack: () => void;
+}) => (
+  <Box
+    bg="white"
+    border="1px solid"
+    borderColor="gray.200"
+    borderRadius="2xl"
+    boxShadow="lg"
+    p={12}
+    minW="520px"
+  >
+    <Box
+      mb={4}
+      cursor="pointer"
+      display="inline-flex"
+      alignItems="center"
+      onClick={onBack}
+    >
+      <Text fontSize="sm" color="text.secondary">
+        뒤로
+      </Text>
+    </Box>
+
+    <Box display="flex" flexDirection="column" gap={4}>
+      {requirements.map((requirement) => (
+        <Box
+          key={requirement.id}
+          display="flex"
+          gap={3}
+          alignItems="center"
+          cursor="pointer"
+          px={6}
+          py={4}
+          borderRadius="3xl"
+          _hover={{ bg: "gray.50" }}
+          transition="background 150ms ease"
+          onClick={() => onSelect(requirement)}
+        >
+          <Box display="flex" alignItems="center" justifyContent="center" p={3}>
+            <Icon as={requirement.iconComponent} boxSize={6} />
+          </Box>
+          <Text fontSize="md" fontWeight="bold">
+            {requirement.label}
+          </Text>
+        </Box>
+      ))}
+    </Box>
+  </Box>
+);
+
+const AuthPrompt = ({
+  onAuth,
+  onBack,
+}: {
+  onAuth: () => void;
+  onBack: () => void;
+}) => (
+  <Box
+    bg="white"
+    border="1px solid"
+    borderColor="gray.200"
+    borderRadius="2xl"
+    boxShadow="lg"
+    p={12}
+    minW="520px"
+  >
+    <Box
+      mb={4}
+      cursor="pointer"
+      display="inline-flex"
+      alignItems="center"
+      onClick={onBack}
+    >
+      <Text fontSize="sm" color="text.secondary">
+        뒤로
+      </Text>
+    </Box>
+
+    <Text fontSize="md" mb={6}>
+      인증은 처음 한 번만 진행하면 됩니다.
+    </Text>
+
+    <Box
+      border="1px solid"
+      borderColor="gray.200"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      px={16}
+      py={3}
+      cursor="pointer"
+      _hover={{ bg: "gray.50" }}
+      transition="background 150ms ease"
+      onClick={onAuth}
+    >
+      <Text fontSize="md" fontWeight="semibold">
+        계정 인증하기
+      </Text>
+    </Box>
+  </Box>
+);
+
 export const ServiceSelectionPanel = () => {
   const activePlaceholder = useWorkflowStore(
     (state) => state.activePlaceholder,
@@ -202,19 +314,46 @@ export const ServiceSelectionPanel = () => {
   const setEndNodeId = useWorkflowStore((state) => state.setEndNodeId);
   const onConnect = useWorkflowStore((state) => state.onConnect);
   const openPanel = useWorkflowStore((state) => state.openPanel);
+  const removeNode = useWorkflowStore((state) => state.removeNode);
   const updateNodeConfig = useWorkflowStore((state) => state.updateNodeConfig);
   const { addNode } = useAddNode();
 
   const [step, setStep] = useState<WizardStep>("category");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMeta, setSelectedMeta] = useState<NodeMeta | null>(null);
+  const [selectedService, setSelectedService] = useState<ServiceOption | null>(
+    null,
+  );
+  const [placedNodeId, setPlacedNodeId] = useState<string | null>(null);
+  const [selectedRequirementPreset, setSelectedRequirementPreset] =
+    useState<Record<string, unknown> | null>(null);
 
   const resetWizard = useCallback(() => {
     setStep("category");
     setSearchQuery("");
     setSelectedMeta(null);
+    setSelectedService(null);
+    setPlacedNodeId(null);
+    setSelectedRequirementPreset(null);
     setActivePlaceholder(null);
   }, [setActivePlaceholder]);
+
+  const handleOverlayClose = useCallback(() => {
+    resetWizard();
+  }, [resetWizard]);
+
+  useEffect(() => {
+    if (!activePlaceholder) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && activePlaceholder) {
+        handleOverlayClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activePlaceholder, handleOverlayClose]);
 
   const placeNode = useCallback(
     (meta: NodeMeta, service?: ServiceOption) => {
@@ -254,30 +393,17 @@ export const ServiceSelectionPanel = () => {
   const isMiddleNodeMode =
     activePlaceholder.id !== "placeholder-start" &&
     activePlaceholder.id !== "placeholder-end";
-
-  const finishNodePlacement = (nodeId: string, meta: NodeMeta) => {
-    if (isMiddleNodeMode) {
-      resetWizard();
-      openPanel(nodeId);
-      return;
-    }
-
-    if (SERVICE_REQUIREMENTS[meta.type]) {
-      resetWizard();
-      openPanel(nodeId);
-      return;
-    }
-
-    updateNodeConfig(nodeId, {});
-    resetWizard();
-  };
+  const requirementGroup = selectedMeta
+    ? SERVICE_REQUIREMENTS[selectedMeta.type]
+    : undefined;
 
   const handleCategorySelect = (meta: NodeMeta) => {
     if (isMiddleNodeMode) {
       const nodeId = placeNode(meta);
       if (!nodeId) return;
 
-      finishNodePlacement(nodeId, meta);
+      resetWizard();
+      openPanel(nodeId);
       return;
     }
 
@@ -291,7 +417,16 @@ export const ServiceSelectionPanel = () => {
     const nodeId = placeNode(meta);
     if (!nodeId) return;
 
-    finishNodePlacement(nodeId, meta);
+    const nextRequirementGroup = SERVICE_REQUIREMENTS[meta.type];
+    if (nextRequirementGroup) {
+      setSelectedMeta(meta);
+      setPlacedNodeId(nodeId);
+      setStep("requirement");
+      return;
+    }
+
+    updateNodeConfig(nodeId, {});
+    resetWizard();
   };
 
   const handleServiceSelect = (service: ServiceOption) => {
@@ -300,7 +435,64 @@ export const ServiceSelectionPanel = () => {
     const nodeId = placeNode(selectedMeta, service);
     if (!nodeId) return;
 
-    finishNodePlacement(nodeId, selectedMeta);
+    setSelectedService(service);
+    setPlacedNodeId(nodeId);
+
+    if (SERVICE_REQUIREMENTS[selectedMeta.type]) {
+      setStep("requirement");
+      return;
+    }
+
+    updateNodeConfig(nodeId, {});
+    resetWizard();
+  };
+
+  const handleRequirementSelect = (requirement: ServiceRequirement) => {
+    if (!placedNodeId || !selectedMeta) return;
+
+    const serviceGroup = CATEGORY_SERVICE_MAP[selectedMeta.type];
+    if (serviceGroup?.requiresAuth) {
+      setSelectedRequirementPreset(requirement.configPreset);
+      setStep("auth");
+      return;
+    }
+
+    updateNodeConfig(placedNodeId, requirement.configPreset);
+    resetWizard();
+  };
+
+  const handleAuth = () => {
+    if (!placedNodeId || !selectedRequirementPreset) return;
+
+    updateNodeConfig(placedNodeId, selectedRequirementPreset);
+    resetWizard();
+  };
+
+  const handleBackToCategory = () => {
+    setSelectedMeta(null);
+    setSelectedService(null);
+    setStep("category");
+  };
+
+  const handleBackFromRequirement = () => {
+    if (placedNodeId) {
+      removeNode(placedNodeId);
+      setPlacedNodeId(null);
+    }
+
+    if (selectedService) {
+      setSelectedService(null);
+      setStep("service");
+      return;
+    }
+
+    setSelectedMeta(null);
+    setStep("category");
+  };
+
+  const handleBackToRequirement = () => {
+    setSelectedRequirementPreset(null);
+    setStep("requirement");
   };
 
   const getTitle = (): string => {
@@ -309,6 +501,10 @@ export const ServiceSelectionPanel = () => {
         return "어디에서 어디로 갈까요?";
       case "service":
         return "서비스 선택";
+      case "requirement":
+        return requirementGroup?.title ?? "요구사항 선택";
+      case "auth":
+        return "인증";
     }
   };
 
@@ -322,30 +518,61 @@ export const ServiceSelectionPanel = () => {
       alignItems="center"
       justifyContent="center"
       pointerEvents="auto"
+      onClick={handleOverlayClose}
     >
-      <Text fontSize="2xl" fontWeight="bold" mb={6} textAlign="center">
-        {getTitle()}
-      </Text>
+      <Box
+        position="absolute"
+        top={8}
+        right={8}
+        cursor="pointer"
+        onClick={(event) => {
+          event.stopPropagation();
+          handleOverlayClose();
+        }}
+      >
+        <Icon as={MdCancel} boxSize={8} color="gray.600" />
+      </Box>
 
-      {step === "category" ? (
-        <CategoryGrid
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          onSelect={handleCategorySelect}
-        />
-      ) : null}
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        gap={6}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <Text fontSize="2xl" fontWeight="bold" textAlign="center">
+          {getTitle()}
+        </Text>
 
-      {step === "service" && selectedMeta ? (
-        <ServiceGrid
-          selectedMeta={selectedMeta}
-          services={CATEGORY_SERVICE_MAP[selectedMeta.type]!.services}
-          onSelect={handleServiceSelect}
-          onBack={() => {
-            setStep("category");
-            setSelectedMeta(null);
-          }}
-        />
-      ) : null}
+        {step === "category" ? (
+          <CategoryGrid
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            onSelect={handleCategorySelect}
+          />
+        ) : null}
+
+        {step === "service" && selectedMeta && !isMiddleNodeMode ? (
+          <ServiceGrid
+            selectedMeta={selectedMeta}
+            services={CATEGORY_SERVICE_MAP[selectedMeta.type]!.services}
+            onSelect={handleServiceSelect}
+            onBack={handleBackToCategory}
+          />
+        ) : null}
+
+        {step === "requirement" && requirementGroup && !isMiddleNodeMode ? (
+          <RequirementList
+            requirements={requirementGroup.requirements}
+            onSelect={handleRequirementSelect}
+            onBack={handleBackFromRequirement}
+          />
+        ) : null}
+
+        {step === "auth" && !isMiddleNodeMode ? (
+          <AuthPrompt onAuth={handleAuth} onBack={handleBackToRequirement} />
+        ) : null}
+      </Box>
     </Box>
   );
 };
