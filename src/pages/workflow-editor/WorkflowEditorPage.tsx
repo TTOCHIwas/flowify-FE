@@ -6,6 +6,7 @@ import { Box, Button, Icon, Spinner, Text } from "@chakra-ui/react";
 import { ReactFlowProvider } from "@xyflow/react";
 
 import { ServiceSelectionPanel } from "@/features/add-node";
+import { ChoicePanel } from "@/features/choice-panel";
 import { ROUTE_PATHS, useWorkflowStore } from "@/shared";
 import { Canvas, EditorToolbar, InputPanel, OutputPanel } from "@/widgets";
 
@@ -87,6 +88,7 @@ const WorkflowEditorInner = () => {
       <Box flex={1} position="relative" overflow="hidden">
         <Canvas />
         <ServiceSelectionPanel />
+        <ChoicePanel />
         <InputPanel />
         <OutputPanel />
       </Box>
