@@ -313,7 +313,6 @@ export const ServiceSelectionPanel = () => {
   const setStartNodeId = useWorkflowStore((state) => state.setStartNodeId);
   const setEndNodeId = useWorkflowStore((state) => state.setEndNodeId);
   const onConnect = useWorkflowStore((state) => state.onConnect);
-  const openPanel = useWorkflowStore((state) => state.openPanel);
   const removeNode = useWorkflowStore((state) => state.removeNode);
   const updateNodeConfig = useWorkflowStore((state) => state.updateNodeConfig);
   const { addNode } = useAddNode();
@@ -390,23 +389,17 @@ export const ServiceSelectionPanel = () => {
 
   if (!activePlaceholder) return null;
 
-  const isMiddleNodeMode =
-    activePlaceholder.id !== "placeholder-start" &&
-    activePlaceholder.id !== "placeholder-end";
+  const isStartOrEndPlaceholder =
+    activePlaceholder.id === "placeholder-start" ||
+    activePlaceholder.id === "placeholder-end";
+
+  if (!isStartOrEndPlaceholder) return null;
+
   const requirementGroup = selectedMeta
     ? SERVICE_REQUIREMENTS[selectedMeta.type]
     : undefined;
 
   const handleCategorySelect = (meta: NodeMeta) => {
-    if (isMiddleNodeMode) {
-      const nodeId = placeNode(meta);
-      if (!nodeId) return;
-
-      resetWizard();
-      openPanel(nodeId);
-      return;
-    }
-
     const serviceGroup = CATEGORY_SERVICE_MAP[meta.type];
     if (serviceGroup && serviceGroup.services.length > 0) {
       setSelectedMeta(meta);
@@ -552,7 +545,7 @@ export const ServiceSelectionPanel = () => {
           />
         ) : null}
 
-        {step === "service" && selectedMeta && !isMiddleNodeMode ? (
+        {step === "service" && selectedMeta ? (
           <ServiceGrid
             selectedMeta={selectedMeta}
             services={CATEGORY_SERVICE_MAP[selectedMeta.type]!.services}
@@ -561,7 +554,7 @@ export const ServiceSelectionPanel = () => {
           />
         ) : null}
 
-        {step === "requirement" && requirementGroup && !isMiddleNodeMode ? (
+        {step === "requirement" && requirementGroup ? (
           <RequirementList
             requirements={requirementGroup.requirements}
             onSelect={handleRequirementSelect}
@@ -569,7 +562,7 @@ export const ServiceSelectionPanel = () => {
           />
         ) : null}
 
-        {step === "auth" && !isMiddleNodeMode ? (
+        {step === "auth" ? (
           <AuthPrompt onAuth={handleAuth} onBack={handleBackToRequirement} />
         ) : null}
       </Box>
