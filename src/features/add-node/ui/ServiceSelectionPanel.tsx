@@ -4,7 +4,7 @@ import { MdArrowBack, MdSearch } from "react-icons/md";
 import { Box, Grid, Icon, Input, Text, VStack } from "@chakra-ui/react";
 
 import { NODE_REGISTRY } from "@/entities/node";
-import type { NodeMeta } from "@/entities/node";
+import type { FlowNodeData, NodeMeta } from "@/entities/node";
 import { useWorkflowStore } from "@/shared";
 
 import { CATEGORY_SERVICE_MAP } from "../model/serviceMap";
@@ -12,7 +12,6 @@ import type { ServiceOption } from "../model/serviceMap";
 import { SERVICE_REQUIREMENTS } from "../model/serviceRequirements";
 import { useAddNode } from "../model/useAddNode";
 
-// ─── 오버레이 단계 ───────────────────────────────────────────
 type WizardStep = "category" | "service";
 
 const allNodeEntries = Object.values(NODE_REGISTRY);
@@ -24,17 +23,17 @@ const parseSourceNodeId = (placeholderId: string): string | undefined => {
   ) {
     return undefined;
   }
+
   return placeholderId.replace("placeholder-", "");
 };
 
-// ─── Step 1: 카테고리 선택 그리드 ────────────────────────────
 const CategoryGrid = ({
   searchQuery,
   setSearchQuery,
   onSelect,
 }: {
   searchQuery: string;
-  setSearchQuery: (q: string) => void;
+  setSearchQuery: (query: string) => void;
   onSelect: (meta: NodeMeta) => void;
 }) => {
   const filtered = searchQuery
@@ -65,7 +64,7 @@ const CategoryGrid = ({
           fontSize="md"
           fontWeight="bold"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(event) => setSearchQuery(event.target.value)}
         />
         <Box
           position="absolute"
@@ -108,7 +107,6 @@ const CategoryGrid = ({
   );
 };
 
-// ─── Step 2: 서비스 선택 ─────────────────────────────────────
 const ServiceGrid = ({
   selectedMeta,
   services,
@@ -121,7 +119,6 @@ const ServiceGrid = ({
   onBack: () => void;
 }) => (
   <Box display="flex" gap={12} alignItems="flex-start">
-    {/* 선택된 카테고리 아이콘 */}
     <VStack gap={2} flexShrink={0} w="100px">
       <Icon
         as={selectedMeta.iconComponent}
@@ -133,7 +130,6 @@ const ServiceGrid = ({
       </Text>
     </VStack>
 
-    {/* 서비스 목록 */}
     <Box
       bg="white"
       border="1px solid"
@@ -152,15 +148,15 @@ const ServiceGrid = ({
         gap={8}
         p={4}
       >
-        {services.map((svc) => (
+        {services.map((service) => (
           <VStack
-            key={svc.value}
+            key={service.value}
             gap={1}
             cursor="pointer"
             minH="80px"
             _hover={{ opacity: 0.7 }}
             transition="opacity 150ms ease"
-            onClick={() => onSelect(svc)}
+            onClick={() => onSelect(service)}
           >
             <Box
               display="flex"
@@ -168,10 +164,10 @@ const ServiceGrid = ({
               justifyContent="center"
               h="64px"
             >
-              <Icon as={svc.iconComponent} boxSize={16} />
+              <Icon as={service.iconComponent} boxSize={16} />
             </Box>
             <Text fontSize="xs" fontWeight="medium" textAlign="center">
-              {svc.label}
+              {service.label}
             </Text>
           </VStack>
         ))}
@@ -195,18 +191,18 @@ const ServiceGrid = ({
   </Box>
 );
 
-// ─── 메인 ServiceSelectionPanel ──────────────────────────────
 export const ServiceSelectionPanel = () => {
-  const activePlaceholder = useWorkflowStore((s) => s.activePlaceholder);
-  const setActivePlaceholder = useWorkflowStore((s) => s.setActivePlaceholder);
-  const setStartNodeId = useWorkflowStore((s) => s.setStartNodeId);
-  const setEndNodeId = useWorkflowStore((s) => s.setEndNodeId);
-  const onConnect = useWorkflowStore((s) => s.onConnect);
-  const openPanel = useWorkflowStore((s) => s.openPanel);
-  const setWizardStep = useWorkflowStore((s) => s.setWizardStep);
-  const setWizardSourcePlaceholder = useWorkflowStore(
-    (s) => s.setWizardSourcePlaceholder,
+  const activePlaceholder = useWorkflowStore(
+    (state) => state.activePlaceholder,
   );
+  const setActivePlaceholder = useWorkflowStore(
+    (state) => state.setActivePlaceholder,
+  );
+  const setStartNodeId = useWorkflowStore((state) => state.setStartNodeId);
+  const setEndNodeId = useWorkflowStore((state) => state.setEndNodeId);
+  const onConnect = useWorkflowStore((state) => state.onConnect);
+  const openPanel = useWorkflowStore((state) => state.openPanel);
+  const updateNodeConfig = useWorkflowStore((state) => state.updateNodeConfig);
   const { addNode } = useAddNode();
 
   const [step, setStep] = useState<WizardStep>("category");
@@ -220,30 +216,17 @@ export const ServiceSelectionPanel = () => {
     setActivePlaceholder(null);
   }, [setActivePlaceholder]);
 
-  /**
-   * 노드를 캔버스에 배치하고, placeholder 관계(start/end/엣지)를 설정한다.
-   * 서비스가 있으면 config.service까지 함께 주입한다.
-   */
   const placeNode = useCallback(
     (meta: NodeMeta, service?: ServiceOption) => {
       if (!activePlaceholder) return null;
 
       const nodeId = addNode(meta.type, {
         position: activePlaceholder.position,
+        config: service
+          ? ({ service: service.value } as Partial<FlowNodeData["config"]>)
+          : undefined,
       });
 
-      if (service) {
-        const store = useWorkflowStore.getState();
-        const node = store.nodes.find((n) => n.id === nodeId);
-        if (node) {
-          store.updateNodeConfig(nodeId, {
-            ...node.data.config,
-            service: service.value as never,
-          });
-        }
-      }
-
-      // placeholder 관계 설정
       const sourceNodeId = parseSourceNodeId(activePlaceholder.id);
 
       if (activePlaceholder.id === "placeholder-start") {
@@ -263,15 +246,42 @@ export const ServiceSelectionPanel = () => {
 
       return nodeId;
     },
-    [activePlaceholder, addNode, onConnect, setStartNodeId, setEndNodeId],
+    [activePlaceholder, addNode, onConnect, setEndNodeId, setStartNodeId],
   );
 
   if (!activePlaceholder) return null;
 
-  // ── Step 1: 카테고리 선택 ──────────────────────────────────
-  const handleCategorySelect = (meta: NodeMeta) => {
-    const serviceGroup = CATEGORY_SERVICE_MAP[meta.type];
+  const isMiddleNodeMode =
+    activePlaceholder.id !== "placeholder-start" &&
+    activePlaceholder.id !== "placeholder-end";
 
+  const finishNodePlacement = (nodeId: string, meta: NodeMeta) => {
+    if (isMiddleNodeMode) {
+      resetWizard();
+      openPanel(nodeId);
+      return;
+    }
+
+    if (SERVICE_REQUIREMENTS[meta.type]) {
+      resetWizard();
+      openPanel(nodeId);
+      return;
+    }
+
+    updateNodeConfig(nodeId, {});
+    resetWizard();
+  };
+
+  const handleCategorySelect = (meta: NodeMeta) => {
+    if (isMiddleNodeMode) {
+      const nodeId = placeNode(meta);
+      if (!nodeId) return;
+
+      finishNodePlacement(nodeId, meta);
+      return;
+    }
+
+    const serviceGroup = CATEGORY_SERVICE_MAP[meta.type];
     if (serviceGroup && serviceGroup.services.length > 0) {
       setSelectedMeta(meta);
       setStep("service");
@@ -281,40 +291,24 @@ export const ServiceSelectionPanel = () => {
     const nodeId = placeNode(meta);
     if (!nodeId) return;
 
-    const reqGroup = SERVICE_REQUIREMENTS[meta.type];
-    if (reqGroup) {
-      setWizardSourcePlaceholder(activePlaceholder);
-      openPanel(nodeId);
-      setWizardStep("requirement");
-    }
-
-    resetWizard();
+    finishNodePlacement(nodeId, meta);
   };
 
-  // ── Step 2: 서비스 선택 후 우측 패널 위저드 시작 ────────────
   const handleServiceSelect = (service: ServiceOption) => {
     if (!selectedMeta) return;
 
     const nodeId = placeNode(selectedMeta, service);
     if (!nodeId) return;
 
-    const reqGroup = SERVICE_REQUIREMENTS[selectedMeta.type];
-    if (reqGroup) {
-      setWizardSourcePlaceholder(activePlaceholder);
-      openPanel(nodeId);
-      setWizardStep("requirement");
-    }
-
-    resetWizard();
+    finishNodePlacement(nodeId, selectedMeta);
   };
 
-  // ── 제목 결정 ──────────────────────────────────────────────
   const getTitle = (): string => {
     switch (step) {
       case "category":
         return "어디에서 어디로 갈까요?";
       case "service":
-        return "가이드라인 제목";
+        return "서비스 선택";
     }
   };
 
@@ -333,15 +327,15 @@ export const ServiceSelectionPanel = () => {
         {getTitle()}
       </Text>
 
-      {step === "category" && (
+      {step === "category" ? (
         <CategoryGrid
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           onSelect={handleCategorySelect}
         />
-      )}
+      ) : null}
 
-      {step === "service" && selectedMeta && (
+      {step === "service" && selectedMeta ? (
         <ServiceGrid
           selectedMeta={selectedMeta}
           services={CATEGORY_SERVICE_MAP[selectedMeta.type]!.services}
@@ -351,7 +345,7 @@ export const ServiceSelectionPanel = () => {
             setSelectedMeta(null);
           }}
         />
-      )}
+      ) : null}
     </Box>
   );
 };

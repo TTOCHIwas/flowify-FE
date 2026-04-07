@@ -11,10 +11,11 @@ const OFFSET_STEP = 30;
 
 interface AddNodeOptions {
   position?: { x: number; y: number };
+  config?: Partial<FlowNodeData["config"]>;
 }
 
 export const useAddNode = () => {
-  const addNode = useWorkflowStore((s) => s.addNode);
+  const addNode = useWorkflowStore((state) => state.addNode);
   const callCountRef = useRef(0);
 
   const addNodeByType = (type: NodeType, options?: AddNodeOptions): string => {
@@ -39,7 +40,10 @@ export const useAddNode = () => {
       data: {
         type,
         label: meta.label,
-        config: { ...meta.defaultConfig },
+        config: {
+          ...meta.defaultConfig,
+          ...options?.config,
+        } as FlowNodeData["config"],
         inputTypes: [...meta.defaultInputTypes],
         outputTypes: [...meta.defaultOutputTypes],
       },
