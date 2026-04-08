@@ -16,15 +16,22 @@ import {
 } from "../model/sidebarItems";
 
 import { SidebarNavItem } from "./SidebarNavItem";
+import { SidebarUserMenu } from "./SidebarUserMenu";
 
 type AppSidebarProps = {
   isExpanded: boolean;
+  isLogoutMenuOpen: boolean;
   onToggleExpanded: () => void;
+  onToggleLogoutMenu: () => void;
+  onCloseLogoutMenu: () => void;
 };
 
 export const AppSidebar = ({
   isExpanded,
+  isLogoutMenuOpen,
   onToggleExpanded,
+  onToggleLogoutMenu,
+  onCloseLogoutMenu,
 }: AppSidebarProps) => {
   const location = useLocation();
   const toggleIcon = isExpanded
@@ -55,8 +62,9 @@ export const AppSidebar = ({
       borderColor={sidebarLayoutSpec.borderColor}
       bg="white"
       transition="width 220ms ease"
-      overflow="hidden"
+      overflow="visible"
       flexShrink={0}
+      onMouseLeave={onCloseLogoutMenu}
     >
       <Flex direction="column" gap={`${sidebarLayoutSpec.sectionGap}px`}>
         <SidebarNavItem
@@ -79,15 +87,26 @@ export const AppSidebar = ({
       </Flex>
 
       <Flex direction="column" gap={`${sidebarLayoutSpec.itemGap}px`}>
-        {sidebarSecondaryItems.map((item) => (
-          <SidebarNavItem
-            key={item.id}
-            icon={item.icon}
-            label={item.label}
-            isExpanded={isExpanded}
-            isActive={activeRouteIds.has(item.id)}
-          />
-        ))}
+        {sidebarSecondaryItems.map((item) =>
+          item.kind === "user" ? (
+            <SidebarUserMenu
+              key={item.id}
+              icon={item.icon}
+              label={item.label}
+              isExpanded={isExpanded}
+              isOpen={isLogoutMenuOpen}
+              onToggle={onToggleLogoutMenu}
+            />
+          ) : (
+            <SidebarNavItem
+              key={item.id}
+              icon={item.icon}
+              label={item.label}
+              isExpanded={isExpanded}
+              isActive={activeRouteIds.has(item.id)}
+            />
+          ),
+        )}
       </Flex>
     </Flex>
   );

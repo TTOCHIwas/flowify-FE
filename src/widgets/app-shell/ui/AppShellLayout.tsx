@@ -7,11 +7,23 @@ import { useSidebarState } from "../model/useSidebarState";
 import { AppSidebar } from "./AppSidebar";
 
 export const AppShellLayout = () => {
-  const { isExpanded, toggleExpanded } = useSidebarState();
+  const {
+    isExpanded,
+    isLogoutMenuOpen,
+    toggleExpanded,
+    toggleLogoutMenu,
+    closeLogoutMenu,
+  } = useSidebarState();
 
   return (
     <Flex minH="100dvh" bg="gray.50">
-      <AppSidebar isExpanded={isExpanded} onToggleExpanded={toggleExpanded} />
+      <AppSidebar
+        isExpanded={isExpanded}
+        isLogoutMenuOpen={isLogoutMenuOpen}
+        onToggleExpanded={toggleExpanded}
+        onToggleLogoutMenu={toggleLogoutMenu}
+        onCloseLogoutMenu={closeLogoutMenu}
+      />
       <Box as="main" flex={1} minW={0} overflow="auto">
         <Outlet />
       </Box>
