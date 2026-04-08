@@ -19,13 +19,14 @@ import type {
   MappingDataTypeKey,
   ProcessingMethodOption,
 } from "@/features/choice-panel";
+import { PanelRenderer } from "@/features/configure-node";
+import { useWorkflowStore } from "@/shared";
+
 import {
   ActionStep,
   FollowUpStep,
   ProcessingMethodStep,
-} from "@/features/choice-panel/ui";
-import { PanelRenderer } from "@/features/configure-node";
-import { useWorkflowStore } from "@/shared";
+} from "./WizardStepContent";
 
 type WizardStep = "processing-method" | "action" | "follow-up";
 

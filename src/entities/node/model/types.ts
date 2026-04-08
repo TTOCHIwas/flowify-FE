@@ -30,9 +30,9 @@ export type NodeCategory = "domain" | "processing" | "ai";
 interface BaseNodeConfig {
   /** 설정 완료 여부 — 캔버스에서 경고 표시 기준 */
   isConfigured: boolean;
-  /** ChoicePanel에서 선택한 액션 ID */
+  /** 중간 노드 위자드에서 선택한 액션 ID */
   choiceActionId?: string | null;
-  /** ChoicePanel 후속 설정 값 */
+  /** 중간 노드 위자드 후속 설정 값 */
   choiceSelections?: Record<string, string | string[]> | null;
 }
 
