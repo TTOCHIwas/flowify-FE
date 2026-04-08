@@ -20,7 +20,7 @@ export const LogoutMenu = ({
       boxShadow="0 10px 30px rgba(15, 23, 42, 0.12)"
       _hover={{ bg: "gray.50" }}
       _active={{ bg: "gray.100" }}
-      isLoading={isPending}
+      loading={isPending}
       onClick={onLogout}
     >
       로그아웃

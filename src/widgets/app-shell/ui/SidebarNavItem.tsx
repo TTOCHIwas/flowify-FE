@@ -25,15 +25,21 @@ export const SidebarNavItem = ({
       justifyContent={isExpanded ? "flex-start" : "center"}
       alignItems="center"
       gap={isExpanded ? 3 : 0}
-      w="full"
-      h="28px"
-      minW="28px"
+      w={isExpanded ? "full" : 7}
+      h={7}
+      minW={7}
+      minH={7}
       px={isExpanded ? 2 : 0}
       borderRadius="8px"
       color={isActive ? "gray.900" : "gray.700"}
       bg={isActive ? "gray.100" : "transparent"}
       _hover={{ bg: "gray.100" }}
-      isDisabled={isDisabled}
+      _disabled={{
+        opacity: 0.45,
+        cursor: "not-allowed",
+        _hover: { bg: "transparent" },
+      }}
+      disabled={isDisabled}
       onClick={onClick}
     >
       <Icon as={icon} boxSize="20px" flexShrink={0} />

@@ -3,8 +3,7 @@ import {
   MdKeyboardDoubleArrowLeft,
   MdKeyboardDoubleArrowRight,
 } from "react-icons/md";
-import { useNavigate } from "react-router";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import { Flex } from "@chakra-ui/react";
 
@@ -42,6 +41,7 @@ export const AppSidebar = ({
   const toggleIcon = isExpanded
     ? MdKeyboardDoubleArrowLeft
     : MdKeyboardDoubleArrowRight;
+
   const activeRouteIds = useMemo(() => {
     return new Set(
       [...sidebarPrimaryItems, ...sidebarSecondaryItems]
@@ -74,8 +74,8 @@ export const AppSidebar = ({
       justify="space-between"
       h="100%"
       w={`${isExpanded ? sidebarLayoutSpec.expandedWidth : sidebarLayoutSpec.collapsedWidth}px`}
-      px={`${sidebarLayoutSpec.paddingX}px`}
-      py={`${sidebarLayoutSpec.paddingY}px`}
+      px={1.5}
+      py={6}
       borderRight="1px solid"
       borderColor={sidebarLayoutSpec.borderColor}
       bg="white"
@@ -84,15 +84,15 @@ export const AppSidebar = ({
       flexShrink={0}
       onMouseLeave={onCloseLogoutMenu}
     >
-      <Flex direction="column" gap={`${sidebarLayoutSpec.sectionGap}px`}>
-        <SidebarNavItem
-          icon={toggleIcon}
-          label={isExpanded ? "접기" : sidebarControlItem.label}
-          isExpanded={isExpanded}
-          onClick={onToggleExpanded}
-        />
-        <Flex direction="column" gap={`${sidebarLayoutSpec.itemGap}px`}>
-          {sidebarPrimaryItems.map((item) => (
+      <Flex direction="column" gap={3}>
+        <Flex direction="column" gap={1}>
+          <SidebarNavItem
+            icon={toggleIcon}
+            label={isExpanded ? "접기" : sidebarControlItem.label}
+            isExpanded={isExpanded}
+            onClick={onToggleExpanded}
+          />
+          {sidebarPrimaryItems.slice(0, 1).map((item) => (
             <SidebarNavItem
               key={item.id}
               icon={item.icon}
@@ -106,9 +106,22 @@ export const AppSidebar = ({
             />
           ))}
         </Flex>
+
+        <Flex direction="column" gap={1}>
+          {sidebarPrimaryItems.slice(1).map((item) => (
+            <SidebarNavItem
+              key={item.id}
+              icon={item.icon}
+              label={item.label}
+              isExpanded={isExpanded}
+              isActive={activeRouteIds.has(item.id)}
+              onClick={() => void handlePrimaryItemClick(item.id, item.path)}
+            />
+          ))}
+        </Flex>
       </Flex>
 
-      <Flex direction="column" gap={`${sidebarLayoutSpec.itemGap}px`}>
+      <Flex direction="column" gap={1}>
         {sidebarSecondaryItems.map((item) =>
           item.kind === "user" ? (
             <SidebarUserMenu
@@ -118,6 +131,7 @@ export const AppSidebar = ({
               isExpanded={isExpanded}
               isOpen={isLogoutMenuOpen}
               onToggle={onToggleLogoutMenu}
+              onClose={onCloseLogoutMenu}
             />
           ) : (
             <SidebarNavItem
@@ -127,7 +141,6 @@ export const AppSidebar = ({
               isExpanded={isExpanded}
               isActive={activeRouteIds.has(item.id)}
               isDisabled={item.kind === "placeholder"}
-              onClick={item.path ? () => navigate(item.path) : undefined}
             />
           ),
         )}
