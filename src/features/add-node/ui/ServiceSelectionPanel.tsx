@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { MdArrowBack, MdCancel, MdSearch } from "react-icons/md";
+import type { ElementType, ReactNode } from "react";
+import { MdAdd, MdArrowBack, MdCancel, MdSearch } from "react-icons/md";
 
 import { Box, Grid, Icon, Input, Text, VStack } from "@chakra-ui/react";
 
@@ -18,6 +19,7 @@ import { useAddNode } from "../model/useAddNode";
 type WizardStep = "category" | "service" | "requirement" | "auth";
 
 const allNodeEntries = Object.values(NODE_REGISTRY);
+const WIZARD_CARD_BORDER = "#f2f2f2";
 
 const parseSourceNodeId = (placeholderId: string): string | undefined => {
   if (
@@ -29,6 +31,78 @@ const parseSourceNodeId = (placeholderId: string): string | undefined => {
 
   return placeholderId.replace("placeholder-", "");
 };
+
+const WizardCard = ({
+  children,
+  minWidth = "520px",
+  maxWidth,
+}: {
+  children: ReactNode;
+  minWidth?: string;
+  maxWidth?: string;
+}) => (
+  <Box
+    bg="white"
+    border="1px solid"
+    borderColor={WIZARD_CARD_BORDER}
+    borderRadius="20px"
+    boxShadow="0 4px 4px rgba(0,0,0,0.25)"
+    p={12}
+    minW={minWidth}
+    maxW={maxWidth}
+    overflow="hidden"
+  >
+    {children}
+  </Box>
+);
+
+const PlaceholderPreview = ({ label }: { label: string }) => (
+  <Box width="100px" textAlign="center">
+    <Box
+      w="100px"
+      h="100px"
+      border="2px dashed"
+      borderColor="gray.400"
+      borderRadius="lg"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      mb={3}
+      mx="auto"
+    >
+      <Icon as={MdAdd} boxSize={8} color="gray.400" />
+    </Box>
+    <Text fontSize="16px" fontWeight="bold" lineHeight="short">
+      {label}
+    </Text>
+  </Box>
+);
+
+const SelectedNodePreview = ({
+  iconComponent,
+  label,
+  color,
+}: {
+  iconComponent: ElementType;
+  label: string;
+  color?: string;
+}) => (
+  <Box width="100px" textAlign="center">
+    <Box
+      h="100px"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      mb={3}
+      mx="auto"
+    >
+      <Icon as={iconComponent} boxSize={20} color={color ?? "text.primary"} />
+    </Box>
+    <Text fontSize="16px" fontWeight="bold" lineHeight="short">
+      {label}
+    </Text>
+  </Box>
+);
 
 const CategoryGrid = ({
   searchQuery,
@@ -44,16 +118,7 @@ const CategoryGrid = ({
     : allNodeEntries;
 
   return (
-    <Box
-      bg="white"
-      border="1px solid"
-      borderColor="gray.200"
-      borderRadius="2xl"
-      boxShadow="lg"
-      p={12}
-      maxW="820px"
-      w="full"
-    >
+    <WizardCard minWidth="820px" maxWidth="820px">
       <Box position="relative" mb={6}>
         <Input
           placeholder="검색"
@@ -106,7 +171,7 @@ const CategoryGrid = ({
           </VStack>
         ))}
       </Grid>
-    </Box>
+    </WizardCard>
   );
 };
 
@@ -121,108 +186,83 @@ const ServiceGrid = ({
   onSelect: (service: ServiceOption) => void;
   onBack: () => void;
 }) => (
-  <Box display="flex" gap={12} alignItems="flex-start">
-    <VStack gap={2} flexShrink={0} w="100px">
-      <Icon
-        as={selectedMeta.iconComponent}
-        boxSize={20}
-        color={selectedMeta.color}
-      />
-      <Text fontSize="md" fontWeight="bold" textAlign="center">
-        {selectedMeta.label}
-      </Text>
-    </VStack>
+  <WizardCard minWidth="520px" maxWidth="720px">
+    <Text fontSize="md" fontWeight="medium" color="text.secondary" mb={6}>
+      {selectedMeta.label} 카테고리의 서비스를 선택해주세요.
+    </Text>
+
+    <Grid templateColumns="repeat(auto-fill, minmax(80px, 1fr))" gap={8} p={4}>
+      {services.map((service) => (
+        <VStack
+          key={service.value}
+          gap={1}
+          cursor="pointer"
+          minH="80px"
+          _hover={{ opacity: 0.7 }}
+          transition="opacity 150ms ease"
+          onClick={() => onSelect(service)}
+        >
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            h="64px"
+          >
+            <Icon as={service.iconComponent} boxSize={16} />
+          </Box>
+          <Text fontSize="xs" fontWeight="medium" textAlign="center">
+            {service.label}
+          </Text>
+        </VStack>
+      ))}
+    </Grid>
 
     <Box
-      bg="white"
-      border="1px solid"
-      borderColor="gray.200"
-      borderRadius="2xl"
-      boxShadow="lg"
-      p={12}
-      minW="420px"
+      mt={4}
+      cursor="pointer"
+      onClick={onBack}
+      display="inline-flex"
+      alignItems="center"
+      gap={1}
+      color="gray.500"
+      _hover={{ color: "black" }}
+      transition="color 150ms ease"
     >
-      <Text fontSize="xl" fontWeight="bold" mb={6}>
-        서비스를 선택해주세요.
-      </Text>
-
-      <Grid
-        templateColumns="repeat(auto-fill, minmax(80px, 1fr))"
-        gap={8}
-        p={4}
-      >
-        {services.map((service) => (
-          <VStack
-            key={service.value}
-            gap={1}
-            cursor="pointer"
-            minH="80px"
-            _hover={{ opacity: 0.7 }}
-            transition="opacity 150ms ease"
-            onClick={() => onSelect(service)}
-          >
-            <Box
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              h="64px"
-            >
-              <Icon as={service.iconComponent} boxSize={16} />
-            </Box>
-            <Text fontSize="xs" fontWeight="medium" textAlign="center">
-              {service.label}
-            </Text>
-          </VStack>
-        ))}
-      </Grid>
-
-      <Box
-        mt={4}
-        cursor="pointer"
-        onClick={onBack}
-        display="inline-flex"
-        alignItems="center"
-        gap={1}
-        color="gray.500"
-        _hover={{ color: "black" }}
-        transition="color 150ms ease"
-      >
-        <Icon as={MdArrowBack} boxSize={5} />
-        <Text fontSize="sm">뒤로</Text>
-      </Box>
+      <Icon as={MdArrowBack} boxSize={5} />
+      <Text fontSize="sm">뒤로</Text>
     </Box>
-  </Box>
+  </WizardCard>
 );
 
 const RequirementList = ({
+  title,
   requirements,
   onSelect,
   onBack,
 }: {
+  title: string;
   requirements: ServiceRequirement[];
   onSelect: (requirement: ServiceRequirement) => void;
   onBack: () => void;
 }) => (
-  <Box
-    bg="white"
-    border="1px solid"
-    borderColor="gray.200"
-    borderRadius="2xl"
-    boxShadow="lg"
-    p={12}
-    minW="520px"
-  >
+  <WizardCard>
     <Box
       mb={4}
       cursor="pointer"
       display="inline-flex"
       alignItems="center"
       onClick={onBack}
+      color="gray.500"
+      _hover={{ color: "black" }}
+      transition="color 150ms ease"
     >
-      <Text fontSize="sm" color="text.secondary">
-        뒤로
-      </Text>
+      <Icon as={MdArrowBack} boxSize={5} mr={1} />
+      <Text fontSize="sm">뒤로</Text>
     </Box>
+
+    <Text fontSize="xl" fontWeight="bold" mb={6}>
+      {title}
+    </Text>
 
     <Box display="flex" flexDirection="column" gap={4}>
       {requirements.map((requirement) => (
@@ -248,7 +288,7 @@ const RequirementList = ({
         </Box>
       ))}
     </Box>
-  </Box>
+  </WizardCard>
 );
 
 const AuthPrompt = ({
@@ -258,34 +298,32 @@ const AuthPrompt = ({
   onAuth: () => void;
   onBack: () => void;
 }) => (
-  <Box
-    bg="white"
-    border="1px solid"
-    borderColor="gray.200"
-    borderRadius="2xl"
-    boxShadow="lg"
-    p={12}
-    minW="520px"
-  >
+  <WizardCard>
     <Box
       mb={4}
       cursor="pointer"
       display="inline-flex"
       alignItems="center"
       onClick={onBack}
+      color="gray.500"
+      _hover={{ color: "black" }}
+      transition="color 150ms ease"
     >
-      <Text fontSize="sm" color="text.secondary">
-        뒤로
-      </Text>
+      <Icon as={MdArrowBack} boxSize={5} mr={1} />
+      <Text fontSize="sm">뒤로</Text>
     </Box>
 
-    <Text fontSize="md" mb={6}>
+    <Text fontSize="xl" fontWeight="bold" mb={3}>
+      인증이 필요합니다.
+    </Text>
+    <Text fontSize="md" mb={6} color="text.secondary">
       인증은 처음 한 번만 진행하면 됩니다.
     </Text>
 
     <Box
       border="1px solid"
       borderColor="gray.200"
+      borderRadius="xl"
       display="flex"
       alignItems="center"
       justifyContent="center"
@@ -300,7 +338,7 @@ const AuthPrompt = ({
         계정 인증하기
       </Text>
     </Box>
-  </Box>
+  </WizardCard>
 );
 
 export const ServiceSelectionPanel = () => {
@@ -488,83 +526,114 @@ export const ServiceSelectionPanel = () => {
     setStep("requirement");
   };
 
-  const getTitle = (): string => {
+  const getGuidelineTitle = (): string => {
     switch (step) {
       case "category":
         return "어디에서 어디로 갈까요?";
       case "service":
-        return "서비스 선택";
+        return "서비스를 선택해주세요.";
       case "requirement":
-        return requirementGroup?.title ?? "요구사항 선택";
+        return "어떻게 사용하시겠어요?";
       case "auth":
-        return "인증";
+        return "인증은 가장 처음 한 번만 진행됩니다.";
     }
   };
 
+  const placeholderLabel =
+    activePlaceholder.id === "placeholder-start" ? "시작" : "도착";
+
+  const previewMeta = selectedService
+    ? {
+        iconComponent: selectedService.iconComponent,
+        color: undefined,
+        label: selectedService.label,
+      }
+    : selectedMeta
+      ? {
+          iconComponent: selectedMeta.iconComponent,
+          color: selectedMeta.color,
+          label: selectedMeta.label,
+        }
+      : null;
+
   return (
-    <Box
-      position="absolute"
-      inset={0}
-      zIndex={20}
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      pointerEvents="auto"
-      onClick={handleOverlayClose}
-    >
+    <Box position="absolute" inset={0} zIndex={20} onClick={handleOverlayClose}>
       <Box
         position="absolute"
-        top={8}
-        right={8}
-        cursor="pointer"
-        onClick={(event) => {
-          event.stopPropagation();
-          handleOverlayClose();
-        }}
-      >
-        <Icon as={MdCancel} boxSize={8} color="gray.600" />
-      </Box>
-
-      <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        gap={6}
+        left="50%"
+        top="50%"
+        transform="translate(-50%, -50%)"
         onClick={(event) => event.stopPropagation()}
       >
-        <Text fontSize="2xl" fontWeight="bold" textAlign="center">
-          {getTitle()}
+        <Text
+          fontSize="24px"
+          fontWeight="bold"
+          textAlign="center"
+          pb="24px"
+          lineHeight="shorter"
+        >
+          {getGuidelineTitle()}
         </Text>
 
-        {step === "category" ? (
-          <CategoryGrid
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            onSelect={handleCategorySelect}
-          />
-        ) : null}
+        <Box position="relative">
+          <Box
+            position="absolute"
+            top={5}
+            right={5}
+            cursor="pointer"
+            zIndex={1}
+            onClick={handleOverlayClose}
+          >
+            <Icon as={MdCancel} boxSize={7} color="gray.600" />
+          </Box>
 
-        {step === "service" && selectedMeta ? (
-          <ServiceGrid
-            selectedMeta={selectedMeta}
-            services={CATEGORY_SERVICE_MAP[selectedMeta.type]!.services}
-            onSelect={handleServiceSelect}
-            onBack={handleBackToCategory}
-          />
-        ) : null}
+          <Box display="flex" gap="48px" alignItems="center">
+            {step === "category" || step === "service" ? (
+              <PlaceholderPreview label={placeholderLabel} />
+            ) : previewMeta ? (
+              <SelectedNodePreview
+                iconComponent={previewMeta.iconComponent}
+                color={previewMeta.color}
+                label={previewMeta.label}
+              />
+            ) : (
+              <PlaceholderPreview label={placeholderLabel} />
+            )}
 
-        {step === "requirement" && requirementGroup ? (
-          <RequirementList
-            requirements={requirementGroup.requirements}
-            onSelect={handleRequirementSelect}
-            onBack={handleBackFromRequirement}
-          />
-        ) : null}
+            {step === "category" ? (
+              <CategoryGrid
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                onSelect={handleCategorySelect}
+              />
+            ) : null}
 
-        {step === "auth" ? (
-          <AuthPrompt onAuth={handleAuth} onBack={handleBackToRequirement} />
-        ) : null}
+            {step === "service" && selectedMeta ? (
+              <ServiceGrid
+                selectedMeta={selectedMeta}
+                services={CATEGORY_SERVICE_MAP[selectedMeta.type]!.services}
+                onSelect={handleServiceSelect}
+                onBack={handleBackToCategory}
+              />
+            ) : null}
+
+            {step === "requirement" && requirementGroup ? (
+              <RequirementList
+                title={requirementGroup.title}
+                requirements={requirementGroup.requirements}
+                onSelect={handleRequirementSelect}
+                onBack={handleBackFromRequirement}
+              />
+            ) : null}
+
+            {step === "auth" ? (
+              <AuthPrompt
+                onAuth={handleAuth}
+                onBack={handleBackToRequirement}
+              />
+            ) : null}
+          </Box>
+        </Box>
       </Box>
     </Box>
   );
