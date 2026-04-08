@@ -233,6 +233,14 @@ export const Canvas = () => {
 
   const nodesWithPlaceholders = useMemo(() => {
     const result: Node[] = [...nodes];
+    const endNode = endNodeId
+      ? (nodes.find((node) => node.id === endNodeId) ?? null)
+      : null;
+    const showCreationMethod =
+      startNodeId !== null &&
+      endNodeId !== null &&
+      endNode?.data.config.isConfigured === true &&
+      !creationMethod;
 
     // 분기 1: 시작/도착 미설정 → placeholder 표시
     if (!startNodeId) {
@@ -277,7 +285,7 @@ export const Canvas = () => {
     }
 
     // 분기 2: 둘 다 설정됨 + 생성 방식 미결정
-    if (startNodeId && endNodeId && !creationMethod) {
+    if (showCreationMethod) {
       const startNode = nodes.find((n) => n.id === startNodeId);
       const startX = startNode?.position.x ?? 0;
       const startWidth = startNode

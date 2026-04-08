@@ -48,6 +48,7 @@ export const BaseNode = ({ id, data, children }: BaseNodeProps) => {
     endNodeId,
   });
   const summaryContent = getSummaryContent(presentation.helperText, children);
+  const showNodeIcon = data.config.isConfigured;
 
   const handleOpenPanel = () => {
     openPanel(id);
@@ -80,11 +81,15 @@ export const BaseNode = ({ id, data, children }: BaseNodeProps) => {
         {presentation.roleLabel}
       </Text>
 
-      <Icon
-        as={presentation.iconComponent}
-        boxSize={14}
-        color={data.config.isConfigured ? "text.primary" : "text.secondary"}
-      />
+      <Box h={14} display="flex" alignItems="center" justifyContent="center">
+        {showNodeIcon ? (
+          <Icon
+            as={presentation.iconComponent}
+            boxSize={14}
+            color="text.primary"
+          />
+        ) : null}
+      </Box>
 
       <Text
         fontSize="lg"
