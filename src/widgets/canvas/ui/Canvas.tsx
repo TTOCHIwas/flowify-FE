@@ -58,11 +58,51 @@ const getCenterYFromTop = (topY: number, height: number) => topY + height / 2;
 const getNodeWidth = (node: Node, fallbackWidth = DEFAULT_FLOW_NODE_WIDTH) =>
   node.measured?.width ?? fallbackWidth;
 
+const getNodeHeight = (node: Node, fallbackHeight = DEFAULT_FLOW_NODE_HEIGHT) =>
+  node.measured?.height ?? fallbackHeight;
+
+const getNodeFallbackWidth = (node: Node) => {
+  if (node.type === "placeholder") return PLACEHOLDER_NODE_WIDTH;
+  if (node.type === "creation-method") return CREATION_METHOD_NODE_WIDTH;
+  return DEFAULT_FLOW_NODE_WIDTH;
+};
+
+const getNodeFallbackHeight = (node: Node) => {
+  if (node.type === "placeholder") return PLACEHOLDER_NODE_HEIGHT;
+  if (node.type === "creation-method") return CREATION_METHOD_NODE_HEIGHT;
+  return DEFAULT_FLOW_NODE_HEIGHT;
+};
+
 const getNodeCenterY = (
   node: Node,
   fallbackHeight = DEFAULT_FLOW_NODE_HEIGHT,
 ) =>
   getCenterYFromTop(node.position.y, node.measured?.height ?? fallbackHeight);
+
+const getNodeBounds = (node: Node) => {
+  const width = getNodeWidth(node, getNodeFallbackWidth(node));
+  const height = getNodeHeight(node, getNodeFallbackHeight(node));
+
+  return {
+    minX: node.position.x,
+    maxX: node.position.x + width,
+    minY: node.position.y,
+    maxY: node.position.y + height,
+  };
+};
+
+const getNodesBoundsCenter = (chainNodes: Node[]) => {
+  const bounds = chainNodes.map((node) => getNodeBounds(node));
+  const minX = Math.min(...bounds.map((bound) => bound.minX));
+  const maxX = Math.max(...bounds.map((bound) => bound.maxX));
+  const minY = Math.min(...bounds.map((bound) => bound.minY));
+  const maxY = Math.max(...bounds.map((bound) => bound.maxY));
+
+  return {
+    centerX: (minX + maxX) / 2,
+    centerY: (minY + maxY) / 2,
+  };
+};
 
 type CanvasNodeType = NodeType | "placeholder" | "creation-method";
 
@@ -193,37 +233,15 @@ export const Canvas = () => {
             zoom: 1,
             duration: 300,
           });
-        } else {
-          setCenter(
-            panelNodePosition.x + DEFAULT_FLOW_NODE_WIDTH / 2,
-            centerY,
-            {
-              duration: 300,
-              zoom: getZoom(),
-            },
-          );
         }
       } else {
         setActivePlaceholder(null);
         openPanel(node.id);
-
-        const nodeWidth = node.measured?.width ?? DEFAULT_FLOW_NODE_WIDTH;
-        const nodeHeight = node.measured?.height ?? DEFAULT_FLOW_NODE_HEIGHT;
-
-        setCenter(
-          node.position.x + nodeWidth / 2,
-          node.position.y + nodeHeight / 2,
-          {
-            duration: 300,
-            zoom: getZoom(),
-          },
-        );
       }
     },
     [
       addNode,
       closePanel,
-      getZoom,
       nodes,
       onConnect,
       openPanel,
@@ -519,6 +537,67 @@ export const Canvas = () => {
         visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target),
     );
   }, [edges, visibleNodeIds]);
+
+  const getChainNodes = useCallback(
+    (nodeId: string) => {
+      const activeNode =
+        nodesWithDragControl.find((node) => node.id === nodeId) ?? null;
+
+      if (!activeNode) return [];
+
+      const chainNodes: Node[] = [activeNode];
+      const incomingEdge = edges.find((edge) => edge.target === nodeId);
+      const outgoingEdge = edges.find((edge) => edge.source === nodeId);
+
+      if (incomingEdge) {
+        const previousNode = nodesWithDragControl.find(
+          (node) => node.id === incomingEdge.source,
+        );
+
+        if (previousNode) {
+          chainNodes.unshift(previousNode);
+        }
+      }
+
+      if (outgoingEdge) {
+        const nextNode = nodesWithDragControl.find(
+          (node) => node.id === outgoingEdge.target,
+        );
+
+        if (nextNode) {
+          chainNodes.push(nextNode);
+        }
+      } else {
+        const nextPlaceholder =
+          nodesWithDragControl.find(
+            (node) => node.id === `placeholder-${nodeId}`,
+          ) ??
+          nodesWithDragControl.find((node) => node.id === "placeholder-end") ??
+          null;
+
+        if (nextPlaceholder) {
+          chainNodes.push(nextPlaceholder);
+        }
+      }
+
+      return chainNodes;
+    },
+    [edges, nodesWithDragControl],
+  );
+
+  useEffect(() => {
+    if (!activePanelNodeId) return;
+
+    const chainNodes = getChainNodes(activePanelNodeId);
+    if (chainNodes.length === 0) return;
+
+    const { centerX, centerY } = getNodesBoundsCenter(chainNodes);
+
+    setCenter(centerX, centerY, {
+      duration: 300,
+      zoom: getZoom(),
+    });
+  }, [activePanelNodeId, getChainNodes, getZoom, setCenter]);
 
   const isCanvasLocked = activePlaceholder !== null;
 

@@ -10,7 +10,7 @@ import {
   readCustomInputs,
   readSelectionSummary,
 } from "@/features/choice-panel";
-import { useWorkflowStore } from "@/shared";
+import { useDualPanelLayout, useWorkflowStore } from "@/shared";
 
 export const InputPanel = () => {
   const activePanelNodeId = useWorkflowStore(
@@ -24,6 +24,7 @@ export const InputPanel = () => {
   const nodes = useWorkflowStore((state) => state.nodes);
   const edges = useWorkflowStore((state) => state.edges);
   const closePanel = useWorkflowStore((state) => state.closePanel);
+  const layout = useDualPanelLayout();
 
   const isOpen = Boolean(activePanelNodeId) && activePlaceholder === null;
   const activeNode = activePanelNodeId
@@ -57,12 +58,10 @@ export const InputPanel = () => {
   return (
     <Box
       position="absolute"
-      top="140px"
-      left="calc(50% - 838px)"
-      width="690px"
-      maxW="690px"
-      minW="690px"
-      height="800px"
+      top={`${layout.inputPanelTop}px`}
+      left={`${layout.inputPanelLeft}px`}
+      width={`${layout.panelWidth}px`}
+      height={`${layout.panelHeight}px`}
       bg="white"
       border="1px solid"
       borderColor="#f2f2f2"
@@ -72,8 +71,7 @@ export const InputPanel = () => {
       px={3}
       py={6}
       zIndex={5}
-      transform={isOpen ? "translateX(0)" : "translateX(-100%)"}
-      transition="transform 200ms ease, opacity 200ms ease"
+      transition="opacity 200ms ease"
       opacity={isOpen ? 1 : 0}
       visibility={isOpen ? "visible" : "hidden"}
       pointerEvents={isOpen ? "auto" : "none"}

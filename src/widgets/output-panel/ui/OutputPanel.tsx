@@ -21,7 +21,7 @@ import type {
   ProcessingMethodOption,
 } from "@/features/choice-panel";
 import { PanelRenderer } from "@/features/configure-node";
-import { useWorkflowStore } from "@/shared";
+import { useDualPanelLayout, useWorkflowStore } from "@/shared";
 
 import {
   ActionStep,
@@ -54,6 +54,7 @@ export const OutputPanel = () => {
   const openPanel = useWorkflowStore((state) => state.openPanel);
   const closePanel = useWorkflowStore((state) => state.closePanel);
   const { addNode } = useAddNode();
+  const layout = useDualPanelLayout();
 
   const [wizardStep, setWizardStep] = useState<WizardStep | null>(null);
   const [initialDataTypeKey, setInitialDataTypeKey] =
@@ -409,12 +410,10 @@ export const OutputPanel = () => {
   return (
     <Box
       position="absolute"
-      top="140px"
-      left="calc(50% + 148px)"
-      width="690px"
-      maxW="690px"
-      minW="690px"
-      height="800px"
+      top={`${layout.outputPanelTop}px`}
+      left={`${layout.outputPanelLeft}px`}
+      width={`${layout.panelWidth}px`}
+      height={`${layout.panelHeight}px`}
       bg="white"
       border="1px solid"
       borderColor="#f2f2f2"
@@ -424,8 +423,7 @@ export const OutputPanel = () => {
       px={3}
       py={6}
       zIndex={5}
-      transform={isOpen ? "translateX(0)" : "translateX(100%)"}
-      transition="transform 200ms ease, opacity 200ms ease"
+      transition="opacity 200ms ease"
       opacity={isOpen ? 1 : 0}
       visibility={isOpen ? "visible" : "hidden"}
       pointerEvents={isOpen ? "auto" : "none"}
