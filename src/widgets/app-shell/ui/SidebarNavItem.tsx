@@ -7,6 +7,7 @@ type SidebarNavItemProps = {
   label: string;
   isExpanded: boolean;
   isActive?: boolean;
+  isDisabled?: boolean;
   onClick?: () => void;
 };
 
@@ -15,6 +16,7 @@ export const SidebarNavItem = ({
   label,
   isExpanded,
   isActive = false,
+  isDisabled = false,
   onClick,
 }: SidebarNavItemProps) => {
   return (
@@ -31,6 +33,7 @@ export const SidebarNavItem = ({
       color={isActive ? "gray.900" : "gray.700"}
       bg={isActive ? "gray.100" : "transparent"}
       _hover={{ bg: "gray.100" }}
+      isDisabled={isDisabled}
       onClick={onClick}
     >
       <Icon as={icon} boxSize="20px" flexShrink={0} />
