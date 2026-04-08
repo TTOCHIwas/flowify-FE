@@ -73,7 +73,10 @@ export const InputPanel = () => {
       py={6}
       zIndex={5}
       transform={isOpen ? "translateX(0)" : "translateX(-100%)"}
-      transition="transform 200ms ease"
+      transition="transform 200ms ease, opacity 200ms ease"
+      opacity={isOpen ? 1 : 0}
+      visibility={isOpen ? "visible" : "hidden"}
+      pointerEvents={isOpen ? "auto" : "none"}
       display="flex"
       flexDirection="column"
       gap={3}
