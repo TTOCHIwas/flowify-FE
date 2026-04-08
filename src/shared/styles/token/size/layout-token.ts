@@ -17,7 +17,24 @@ export const dualPanelLayoutSpec = {
   compactMinCanvasHeight: 720,
 } as const;
 
+export const sidebarLayoutSpec = {
+  collapsedWidth: 40,
+  expandedWidth: 176,
+  paddingX: 6,
+  paddingY: 24,
+  itemSize: 28,
+  itemGap: 4,
+  sectionGap: 12,
+  borderColor: "#ced4da",
+} as const;
+
 export const layoutToken = {
+  sidebar: {
+    collapsedWidth: { value: "40px" },
+    expandedWidth: { value: "176px" },
+    itemSize: { value: "28px" },
+    sectionGap: { value: "12px" },
+  },
   panel: {
     wide: { value: "690px" },
     compactMin: { value: "520px" },
