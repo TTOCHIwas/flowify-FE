@@ -1,7 +1,7 @@
 # 위자드 구현 리팩토링 설계
 
 > **작성일:** 2026-04-06
-> **최종 수정:** 2026-04-08 (v4 설계 반영 — 레이아웃 규격, 중간 노드 위자드 OutputPanel 내장)
+> **최종 수정:** 2026-04-08 (v4.1 설계 반영 — 시작/도착 SSP 앵커 방식 조정, 중간 노드 위자드 OutputPanel 내장)
 > **이슈:** #62
 > **선행:** #60 (feat#60-wizard-ui-flow), [NODE_SETUP_WIZARD_DESIGN.md](./NODE_SETUP_WIZARD_DESIGN.md)
 > **목적:** #60 구현(v1) 이후 발견된 문제를 수정하고, v4 설계 구조로 전환한다.
@@ -66,7 +66,7 @@
 
 | 영역 | v3 (현재 구현) | v4 (목표) |
 |------|---------------|-----------|
-| 시작/도착 위자드 레이아웃 | "캔버스 중앙 오버레이" (구체적 규격 없음) | `[노드 100px] ─48px─ [카드 shadow+rounded-20px]`, 화면 정중앙 |
+| 시작/도착 위자드 레이아웃 | "캔버스 중앙 오버레이" (구체적 규격 없음) | `[실제 캔버스 placeholder/node] ─48px─ [카드 shadow+rounded-20px]`, SSP 내부 preview 없음 |
 | 중간 노드 위자드 | **ChoicePanel** (별도 중앙 오버레이) | **OutputPanel 내장** — 왼쪽(InputPanel) + 오른쪽(OutputPanel 위자드) |
 | 듀얼 패널 레이아웃 | 화면 양 끝에 타이트하게 붙음 | 각 690px × 800px, 전체 1676px 중앙, 296px gap |
 | 패널 사이 노드 표시 | 모든 노드 보임 | **설정 중인 노드 체인만** (이전→현재→다음), 나머지 hidden |
@@ -81,7 +81,7 @@
 
 | 파일 | 주요 변경 |
 |------|-----------|
-| `ServiceSelectionPanel.tsx` | 피그마 레이아웃 규격 적용, 단계별 가이드라인 제목 + 왼쪽 노드 아이콘 |
+| `ServiceSelectionPanel.tsx` | 실제 캔버스 placeholder/node 기준 anchor 레이아웃 적용, 단계별 가이드라인 제목 유지, 내부 preview 제거 |
 | `OutputPanel.tsx` | 위자드 모드(isConfigured: false + 중간 노드) + 상세 모드("나가는 데이터") 이중 역할 |
 | `InputPanel.tsx` | 설정 완료 시 "처리 방식" + 옵션 목록 + 직접 입력 필드 추가 |
 | `Canvas.tsx` | 듀얼 패널 1676px 레이아웃, 노드 체인 필터링, CreationMethodNode 조건부 표시 |
@@ -92,7 +92,7 @@
 ### 4.3 구현 순서 (권장)
 
 ```
-1. SSP 레이아웃 — 피그마 규격 적용 (노드+카드 배치, 가이드라인 제목)
+1. SSP 레이아웃 — 실제 캔버스 placeholder/node 기준 anchor 적용 (카드 외곽 고정, 내부 preview 제거)
 2. BaseNode — 서비스 아이콘 isConfigured 조건부 표시
 3. Canvas — 듀얼 패널 레이아웃 컨테이너 (1676px, 690px 패널)
 4. Canvas — 패널 열림 시 노드 체인 필터링 (관련 노드만 visible)
