@@ -56,7 +56,7 @@ export default function SettingsPage() {
             </HStack>
             <HStack justify="space-between">
               <Text color="gray.500">로그인 콜백 경로</Text>
-              <Text fontWeight="medium">{ROUTE_PATHS.LOGIN_CALLBACK}</Text>
+              <Text fontWeight="medium">{ROUTE_PATHS.AUTH_CALLBACK}</Text>
             </HStack>
           </VStack>
         </Box>

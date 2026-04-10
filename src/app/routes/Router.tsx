@@ -2,7 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router";
 
 import {
   AccountPage,
-  LoginCallbackPage,
+  AuthCallbackPage,
   LoginPage,
   MainPage,
   NotFoundPage,
@@ -27,8 +27,8 @@ export const Router = () => {
 
         <Route path={ROUTE_PATHS.LOGIN} element={<LoginPage />} />
         <Route
-          path={ROUTE_PATHS.LOGIN_CALLBACK}
-          element={<LoginCallbackPage />}
+          path={ROUTE_PATHS.AUTH_CALLBACK}
+          element={<AuthCallbackPage />}
         />
 
         <Route element={<ProtectedRoute />}>
