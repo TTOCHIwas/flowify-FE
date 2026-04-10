@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 
 import { Box, Button, Spinner, Text, VStack } from "@chakra-ui/react";
-import { useLocation, useNavigate } from "react-router";
 
 import {
   ROUTE_PATHS,
@@ -33,25 +33,31 @@ export default function LoginCallbackPage() {
     const state = searchParams.get("state");
     const storedState = getStoredGoogleOAuthState();
 
-    clearGoogleOAuthState();
-
-    if (!code) {
-      clearAuthSession();
-      setCallbackState("error");
-      setErrorMessage(callbackErrorMessages.missingCode);
-      return;
-    }
-
-    if (!state || !storedState || state !== storedState) {
-      clearAuthSession();
-      setCallbackState("error");
-      setErrorMessage(callbackErrorMessages.invalidState);
-      return;
-    }
-
     let isMounted = true;
 
     const exchangeCode = async () => {
+      clearGoogleOAuthState();
+
+      if (!code) {
+        clearAuthSession();
+
+        if (isMounted) {
+          setCallbackState("error");
+          setErrorMessage(callbackErrorMessages.missingCode);
+        }
+        return;
+      }
+
+      if (!state || !storedState || state !== storedState) {
+        clearAuthSession();
+
+        if (isMounted) {
+          setCallbackState("error");
+          setErrorMessage(callbackErrorMessages.invalidState);
+        }
+        return;
+      }
+
       try {
         const response = await authApi.googleCallback(code);
         if (!isMounted) {
