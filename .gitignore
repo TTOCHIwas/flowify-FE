@@ -26,4 +26,6 @@ dist-ssr
 .eslintcache
 
 .env
-.env.example
+.env.local
+.env.*.local
+!.env.example
