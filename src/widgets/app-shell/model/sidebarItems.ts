@@ -24,7 +24,7 @@ export type SidebarItem = {
 
 export const sidebarControlItem: SidebarItem = {
   id: "toggle",
-  label: "펼치기",
+  label: "접기",
   icon: MdKeyboardDoubleArrowRight,
   kind: "action",
 };
@@ -76,6 +76,7 @@ export const sidebarSecondaryItems: SidebarItem[] = [
     id: "settings",
     label: "설정",
     icon: MdOutlineSettings,
-    kind: "placeholder",
+    kind: "route",
+    path: ROUTE_PATHS.SETTINGS,
   },
 ];

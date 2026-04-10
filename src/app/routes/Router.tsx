@@ -1,10 +1,12 @@
 import { BrowserRouter, Route, Routes } from "react-router";
 
 import {
-  LoginPage,
+  AccountPage,
   LoginCallbackPage,
+  LoginPage,
   MainPage,
   NotFoundPage,
+  SettingsPage,
   TemplateDetailPage,
   TemplatesPage,
   WorkflowEditorPage,
@@ -31,6 +33,8 @@ export const Router = () => {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShellLayout />}>
+            <Route path={ROUTE_PATHS.ACCOUNT} element={<AccountPage />} />
+            <Route path={ROUTE_PATHS.SETTINGS} element={<SettingsPage />} />
             <Route path={ROUTE_PATHS.TEMPLATES} element={<TemplatesPage />} />
             <Route
               path={DYNAMIC_ROUTE_PATHS.TEMPLATE_DETAIL}

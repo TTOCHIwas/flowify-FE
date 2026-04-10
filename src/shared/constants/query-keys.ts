@@ -12,4 +12,5 @@ export const QUERY_KEYS = {
     ["workflows", workflowId, "executions"] as const,
   execution: (workflowId: string, execId: string) =>
     ["workflows", workflowId, "executions", execId] as const,
+  oauthTokens: ["oauth-tokens"] as const,
 } as const;
