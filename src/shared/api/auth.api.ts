@@ -17,10 +17,10 @@ export interface LoginResponse {
 }
 
 export const authApi = {
-  googleCallback: (code: string) =>
-    apiClient.get<ApiResponse<LoginResponse>>(
-      `/auth/google/callback?code=${encodeURIComponent(code)}`,
-    ),
+  exchange: (exchangeCode: string) =>
+    apiClient.post<ApiResponse<LoginResponse>>("/auth/exchange", {
+      exchangeCode,
+    }),
 
   refresh: (refreshToken: string) =>
     apiClient.post<ApiResponse<LoginResponse>>("/auth/refresh", {

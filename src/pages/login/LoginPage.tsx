@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { Box, Button, Heading, Text, VStack } from "@chakra-ui/react";
 
-import { createGoogleOAuthUrl } from "@/shared";
+import { buildGoogleLoginStartUrl } from "@/shared";
 
 export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -13,8 +13,7 @@ export default function LoginPage() {
     setIsPending(true);
 
     try {
-      const googleOAuthUrl = createGoogleOAuthUrl();
-      window.location.href = googleOAuthUrl;
+      window.location.href = buildGoogleLoginStartUrl();
     } catch {
       setErrorMessage("구글 로그인 설정 확인이 필요합니다.");
       setIsPending(false);

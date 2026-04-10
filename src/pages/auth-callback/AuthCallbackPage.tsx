@@ -7,8 +7,6 @@ import {
   ROUTE_PATHS,
   authApi,
   clearAuthSession,
-  clearGoogleOAuthState,
-  getStoredGoogleOAuthState,
   storeAuthUser,
   storeTokens,
 } from "@/shared";
@@ -16,12 +14,32 @@ import {
 type CallbackState = "pending" | "error";
 
 const callbackErrorMessages = {
-  missingCode: "인증 코드 확인이 필요합니다.",
-  invalidState: "로그인 검증 확인이 필요합니다.",
+  missingExchangeCode: "로그인 정보 확인이 필요합니다.",
+  oauthFailed: "로그인 인증에 실패했습니다.",
+  expiredExchangeCode: "로그인 정보가 만료되었습니다. 다시 시도해 주세요.",
   exchangeFailed: "로그인 처리 중 오류가 발생했습니다.",
 } as const;
 
-export default function LoginCallbackPage() {
+const getCallbackErrorMessage = (
+  errorCode: string | null,
+  message: string | null,
+) => {
+  if (message) {
+    return message;
+  }
+
+  switch (errorCode) {
+    case "exchange_code_expired":
+    case "exchange_code_invalid":
+      return callbackErrorMessages.expiredExchangeCode;
+    case "oauth_failed":
+      return callbackErrorMessages.oauthFailed;
+    default:
+      return callbackErrorMessages.exchangeFailed;
+  }
+};
+
+export default function AuthCallbackPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [callbackState, setCallbackState] = useState<CallbackState>("pending");
@@ -29,37 +47,35 @@ export default function LoginCallbackPage() {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const code = searchParams.get("code");
-    const state = searchParams.get("state");
-    const storedState = getStoredGoogleOAuthState();
+    const exchangeCode = searchParams.get("exchange_code");
+    const errorCode = searchParams.get("error");
+    const message = searchParams.get("message");
 
     let isMounted = true;
 
-    const exchangeCode = async () => {
-      clearGoogleOAuthState();
-
-      if (!code) {
+    const finalizeLogin = async () => {
+      if (errorCode) {
         clearAuthSession();
 
         if (isMounted) {
           setCallbackState("error");
-          setErrorMessage(callbackErrorMessages.missingCode);
+          setErrorMessage(getCallbackErrorMessage(errorCode, message));
         }
         return;
       }
 
-      if (!state || !storedState || state !== storedState) {
+      if (!exchangeCode) {
         clearAuthSession();
 
         if (isMounted) {
           setCallbackState("error");
-          setErrorMessage(callbackErrorMessages.invalidState);
+          setErrorMessage(callbackErrorMessages.missingExchangeCode);
         }
         return;
       }
 
       try {
-        const response = await authApi.googleCallback(code);
+        const response = await authApi.exchange(exchangeCode);
         if (!isMounted) {
           return;
         }
@@ -75,11 +91,11 @@ export default function LoginCallbackPage() {
 
         clearAuthSession();
         setCallbackState("error");
-        setErrorMessage(callbackErrorMessages.exchangeFailed);
+        setErrorMessage(getCallbackErrorMessage(errorCode, message));
       }
     };
 
-    void exchangeCode();
+    void finalizeLogin();
 
     return () => {
       isMounted = false;
