@@ -79,6 +79,8 @@ export default function LoginPage() {
           </Heading>
 
           <Button
+            type="button"
+            aria-busy={isPending}
             bg="bg.surface"
             border="1px solid"
             borderColor={LOGIN_BUTTON_BORDER_COLOR}
@@ -96,6 +98,16 @@ export default function LoginPage() {
             disabled={isPending}
             _hover={{ bg: "neutral.50" }}
             _active={{ bg: "neutral.100" }}
+            _focusVisible={{
+              outline: "2px solid",
+              outlineColor: "text.primary",
+              outlineOffset: "2px",
+            }}
+            _disabled={{
+              cursor: "not-allowed",
+              opacity: 0.72,
+            }}
+            transition="background-color 160ms ease, opacity 160ms ease"
           >
             {isPending ? (
               <>
@@ -111,7 +123,13 @@ export default function LoginPage() {
           </Button>
 
           {errorMessage ? (
-            <Text fontSize="sm" color="status.error" textAlign="center">
+            <Text
+              role="alert"
+              aria-live="polite"
+              fontSize="sm"
+              color="status.error"
+              textAlign="center"
+            >
               {errorMessage}
             </Text>
           ) : null}
