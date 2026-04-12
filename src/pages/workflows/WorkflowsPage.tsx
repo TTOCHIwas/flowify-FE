@@ -29,6 +29,7 @@ import {
   Spinner,
   Text,
   VStack,
+  chakra,
 } from "@chakra-ui/react";
 
 import { useCreateWorkflowShortcut } from "@/features/create-workflow";
@@ -361,9 +362,8 @@ const WorkflowFilterTabs = ({
       const isActive = filter.key === activeFilter;
 
       return (
-        <Box
+        <chakra.button
           key={filter.key}
-          as="button"
           type="button"
           py={0.5}
           fontSize="14px"
@@ -375,7 +375,7 @@ const WorkflowFilterTabs = ({
           onClick={() => onChange(filter.key)}
         >
           {filter.label}
-        </Box>
+        </chakra.button>
       );
     })}
   </HStack>
