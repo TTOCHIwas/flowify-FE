@@ -29,7 +29,6 @@ import {
   Spinner,
   Text,
   VStack,
-  chakra,
 } from "@chakra-ui/react";
 
 import { useCreateWorkflowShortcut } from "@/features/create-workflow";
@@ -237,7 +236,7 @@ const ServiceBadge = ({ type }: ServiceBadgeProps) => {
           >
             <Box h="8px" bg="blue.500" />
             <Flex h="22px" align="center" justify="center">
-              <Text fontSize="xs" fontWeight="bold" color="blue.500">
+              <Text fontSize="2xs" fontWeight="bold" color="blue.500">
                 31
               </Text>
             </Flex>
@@ -373,9 +372,13 @@ const WorkflowFilterTabs = ({
       const isActive = filter.key === activeFilter;
 
       return (
-        <chakra.button
+        <Button
           key={filter.key}
           type="button"
+          variant="ghost"
+          minW="auto"
+          h="auto"
+          px={0}
           py={0.5}
           fontSize="sm"
           fontWeight={isActive ? "semibold" : "medium"}
@@ -383,10 +386,14 @@ const WorkflowFilterTabs = ({
           borderBottom="1px solid"
           borderColor={isActive ? "neutral.950" : "transparent"}
           transition="border-color 160ms ease"
+          borderRadius="none"
+          bg="transparent"
+          _hover={{ bg: "transparent" }}
+          _active={{ bg: "transparent" }}
           onClick={() => onChange(filter.key)}
         >
           {filter.label}
-        </chakra.button>
+        </Button>
       );
     })}
   </HStack>
