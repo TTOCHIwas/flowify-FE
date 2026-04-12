@@ -82,8 +82,8 @@ const FALLBACK_NODE_ICONS: Record<ServiceBadgeKey, IconType> = {
 };
 
 const getRelativeUpdateLabel = (updatedAt: string) => {
-  const updatedTime = new Date(updatedAt).getTime();
-  if (Number.isNaN(updatedTime)) {
+  const updatedTime = getUpdatedTimestamp(updatedAt);
+  if (updatedTime === 0) {
     return "방금 전 변경됨";
   }
 
@@ -110,6 +110,11 @@ const getRelativeUpdateLabel = (updatedAt: string) => {
   }
 
   return `${Math.floor(diffMs / weekMs)}주 전 변경됨`;
+};
+
+const getUpdatedTimestamp = (updatedAt: string) => {
+  const updatedTime = new Date(updatedAt).getTime();
+  return Number.isNaN(updatedTime) ? 0 : updatedTime;
 };
 
 const getBuildProgressLabel = (workflow: WorkflowResponse) => {
@@ -507,7 +512,12 @@ export default function WorkflowsPage() {
   } = useInfiniteWorkflowListQuery(20);
 
   const workflows = useMemo(
-    () => data?.pages.flatMap((page) => page.content) ?? [],
+    () =>
+      [...(data?.pages.flatMap((page) => page.content) ?? [])].sort(
+        (leftWorkflow, rightWorkflow) =>
+          getUpdatedTimestamp(rightWorkflow.updatedAt) -
+          getUpdatedTimestamp(leftWorkflow.updatedAt),
+      ),
     [data],
   );
 
