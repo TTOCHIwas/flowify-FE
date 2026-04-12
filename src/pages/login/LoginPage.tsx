@@ -1,21 +1,9 @@
 import { useState } from "react";
-
-import {
-  Box,
-  Button,
-  Heading,
-  Spinner,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
 import { FcGoogle } from "react-icons/fc";
 
-import { buildGoogleLoginStartUrl } from "@/shared";
+import { Box, Button, Heading, Spinner, Text, VStack } from "@chakra-ui/react";
 
-const LOGIN_CARD_BORDER_COLOR = "#f2f2f2";
-const LOGIN_CARD_SHADOW = "0 4px 4px rgba(0, 0, 0, 0.25)";
-const LOGIN_BUTTON_BORDER_COLOR = "#efefef";
-const LOGIN_ERROR_MESSAGE = "구글 로그인 설정 확인이 필요합니다.";
+import { buildGoogleLoginStartUrl } from "@/shared";
 
 export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -28,7 +16,7 @@ export default function LoginPage() {
     try {
       window.location.href = buildGoogleLoginStartUrl();
     } catch {
-      setErrorMessage(LOGIN_ERROR_MESSAGE);
+      setErrorMessage("구글 로그인 설정 확인이 필요합니다.");
       setIsPending(false);
     }
   };
@@ -42,12 +30,7 @@ export default function LoginPage() {
       bg="bg.surface"
       px={{ base: 6, md: 8 }}
     >
-      <VStack
-        gap={{ base: 10, md: 12 }}
-        maxW="437px"
-        w="full"
-        align="stretch"
-      >
+      <VStack gap={{ base: 10, md: 12 }} maxW="437px" w="full" align="stretch">
         <Text
           textAlign="center"
           fontSize={{ base: "40px", md: "48px" }}
@@ -62,9 +45,9 @@ export default function LoginPage() {
           gap="10px"
           bg="bg.surface"
           border="1px solid"
-          borderColor={LOGIN_CARD_BORDER_COLOR}
+          borderColor="#f2f2f2"
           borderRadius="20px"
-          boxShadow={LOGIN_CARD_SHADOW}
+          boxShadow="0 4px 4px rgba(0, 0, 0, 0.25)"
           px={{ base: "32px", md: "48px" }}
           py={{ base: "32px", md: "48px" }}
           align="stretch"
@@ -83,7 +66,7 @@ export default function LoginPage() {
             aria-busy={isPending}
             bg="bg.surface"
             border="1px solid"
-            borderColor={LOGIN_BUTTON_BORDER_COLOR}
+            borderColor="#efefef"
             borderRadius="0"
             color="text.primary"
             fontSize="16px"
