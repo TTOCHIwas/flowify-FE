@@ -1,6 +1,13 @@
 import { useState } from "react";
 
-import { Box, Button, Heading, Text, VStack } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Heading,
+  Spinner,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 import { FcGoogle } from "react-icons/fc";
 
 import { buildGoogleLoginStartUrl } from "@/shared";
@@ -8,6 +15,7 @@ import { buildGoogleLoginStartUrl } from "@/shared";
 const LOGIN_CARD_BORDER_COLOR = "#f2f2f2";
 const LOGIN_CARD_SHADOW = "0 4px 4px rgba(0, 0, 0, 0.25)";
 const LOGIN_BUTTON_BORDER_COLOR = "#efefef";
+const LOGIN_ERROR_MESSAGE = "구글 로그인 설정 확인이 필요합니다.";
 
 export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -20,7 +28,7 @@ export default function LoginPage() {
     try {
       window.location.href = buildGoogleLoginStartUrl();
     } catch {
-      setErrorMessage("구글 로그인 설정 확인이 필요합니다.");
+      setErrorMessage(LOGIN_ERROR_MESSAGE);
       setIsPending(false);
     }
   };
@@ -89,12 +97,21 @@ export default function LoginPage() {
             _hover={{ bg: "neutral.50" }}
             _active={{ bg: "neutral.100" }}
           >
-            <FcGoogle size={24} />
-            {isPending ? "구글 로그인 이동 중..." : "Google 로그인"}
+            {isPending ? (
+              <>
+                <Spinner size="sm" color="text.primary" />
+                구글 로그인 이동 중...
+              </>
+            ) : (
+              <>
+                <FcGoogle size={24} />
+                Google 로그인
+              </>
+            )}
           </Button>
 
           {errorMessage ? (
-            <Text fontSize="sm" color="red.500" textAlign="center">
+            <Text fontSize="sm" color="status.error" textAlign="center">
               {errorMessage}
             </Text>
           ) : null}
