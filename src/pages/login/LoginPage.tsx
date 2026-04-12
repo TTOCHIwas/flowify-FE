@@ -1,11 +1,13 @@
 import { useState } from "react";
 
 import { Box, Button, Heading, Text, VStack } from "@chakra-ui/react";
+import { FcGoogle } from "react-icons/fc";
 
 import { buildGoogleLoginStartUrl } from "@/shared";
 
 const LOGIN_CARD_BORDER_COLOR = "#f2f2f2";
 const LOGIN_CARD_SHADOW = "0 4px 4px rgba(0, 0, 0, 0.25)";
+const LOGIN_BUTTON_BORDER_COLOR = "#efefef";
 
 export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -49,7 +51,7 @@ export default function LoginPage() {
         </Text>
 
         <VStack
-          gap={5}
+          gap="10px"
           bg="bg.surface"
           border="1px solid"
           borderColor={LOGIN_CARD_BORDER_COLOR}
@@ -69,15 +71,26 @@ export default function LoginPage() {
           </Heading>
 
           <Button
-            bg="gray.900"
-            color="white"
-            size="lg"
+            bg="bg.surface"
+            border="1px solid"
+            borderColor={LOGIN_BUTTON_BORDER_COLOR}
+            borderRadius="0"
+            color="text.primary"
+            fontSize="16px"
+            fontWeight="semibold"
+            gap="10px"
+            h="auto"
+            minH="auto"
             w="full"
+            px={{ base: "24px", md: "64px" }}
+            py="10px"
             onClick={handleGoogleLogin}
             disabled={isPending}
-            _hover={{ bg: "gray.800" }}
+            _hover={{ bg: "neutral.50" }}
+            _active={{ bg: "neutral.100" }}
           >
-            {isPending ? "구글 로그인 이동 중..." : "구글로 로그인"}
+            <FcGoogle size={24} />
+            {isPending ? "구글 로그인 이동 중..." : "Google 로그인"}
           </Button>
 
           {errorMessage ? (
