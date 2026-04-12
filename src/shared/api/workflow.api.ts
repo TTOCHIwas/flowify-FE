@@ -6,6 +6,10 @@ import { apiClient } from "./client";
 
 export interface CreateWorkflowRequest {
   name: string;
+  description?: string;
+  nodes?: NodeDefinitionResponse[];
+  edges?: EdgeDefinitionResponse[];
+  trigger?: TriggerConfig | null;
 }
 
 export interface UpdateWorkflowRequest {
