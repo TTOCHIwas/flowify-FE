@@ -3,6 +3,7 @@ import {
   type WorkflowResponse,
   getDateTimestamp,
   getRelativeTimeLabel,
+  getServiceBadgeKeyFromService,
 } from "@/shared";
 
 import { type ServiceBadgeKey, type WorkflowFilterKey } from "./types";
@@ -69,21 +70,9 @@ export const getServiceBadgeKey = (
 
   const service = node.config?.["service"];
   if (typeof service === "string") {
-    switch (service) {
-      case "google-calendar":
-        return "calendar";
-      case "gmail":
-        return "gmail";
-      case "google-drive":
-        return "google-drive";
-      case "google-sheets":
-        return "google-sheets";
-      case "notion":
-        return "notion";
-      case "slack":
-        return "slack";
-      default:
-        break;
+    const serviceBadgeKey = getServiceBadgeKeyFromService(service);
+    if (serviceBadgeKey !== "unknown") {
+      return serviceBadgeKey;
     }
   }
 
