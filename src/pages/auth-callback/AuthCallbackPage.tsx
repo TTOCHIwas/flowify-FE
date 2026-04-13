@@ -42,6 +42,10 @@ export default function AuthCallbackPage() {
         return;
       }
 
+      if (!exchangeCode) {
+        return;
+      }
+
       try {
         const result = await authApi.exchange(exchangeCode);
         if (!isMounted) {
