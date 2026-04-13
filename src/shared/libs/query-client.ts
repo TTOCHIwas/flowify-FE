@@ -1,11 +1,16 @@
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 
+import { isCanceledRequestError } from "../api/core";
 import { getApiErrorMessage, toaster } from "../utils";
 
 const showErrorToast = (
-  error: Error,
+  error: unknown,
   meta: Record<string, unknown> | undefined,
 ) => {
+  if (isCanceledRequestError(error)) {
+    return;
+  }
+
   if (meta?.showErrorToast === false) {
     return;
   }
@@ -28,7 +33,7 @@ export const queryClient = new QueryClient({
         return;
       }
 
-      showErrorToast(error as Error, query.meta);
+      showErrorToast(error, query.meta);
     },
   }),
   mutationCache: new MutationCache({
@@ -37,7 +42,7 @@ export const queryClient = new QueryClient({
         return;
       }
 
-      showErrorToast(error as Error, mutation.meta);
+      showErrorToast(error, mutation.meta);
     },
   }),
   defaultOptions: {
