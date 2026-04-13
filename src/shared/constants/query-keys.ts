@@ -7,16 +7,20 @@ export const workflowKeys = {
     [...workflowKeys.lists(), "infinite", size] as const,
   details: () => [...workflowKeys.all(), "detail"] as const,
   detail: (id: string) => [...workflowKeys.details(), id] as const,
-  choices: (workflowId: string, prevNodeId: string) =>
-    [...workflowKeys.detail(workflowId), "choices", prevNodeId] as const,
+  choicesRoot: (workflowId: string) =>
+    [...workflowKeys.detail(workflowId), "choices"] as const,
+  choice: (workflowId: string, prevNodeId: string) =>
+    [...workflowKeys.choicesRoot(workflowId), prevNodeId] as const,
 } as const;
 
 export const executionKeys = {
   all: () => ["execution"] as const,
+  workflow: (workflowId: string) =>
+    [...executionKeys.all(), "workflow", workflowId] as const,
   lists: (workflowId: string) =>
-    [...executionKeys.all(), "list", workflowId] as const,
+    [...executionKeys.workflow(workflowId), "list"] as const,
   detail: (workflowId: string, executionId: string) =>
-    [...executionKeys.all(), "detail", workflowId, executionId] as const,
+    [...executionKeys.workflow(workflowId), "detail", executionId] as const,
 } as const;
 
 export const templateKeys = {

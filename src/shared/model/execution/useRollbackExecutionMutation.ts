@@ -17,7 +17,7 @@ export const useRollbackExecutionMutation = () =>
     }) => executionApi.rollback(workflowId, executionId, nodeId),
     onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({
-        queryKey: executionKeys.lists(variables.workflowId),
+        queryKey: executionKeys.workflow(variables.workflowId),
       });
     },
   });

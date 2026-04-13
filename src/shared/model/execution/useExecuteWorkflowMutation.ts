@@ -9,7 +9,7 @@ export const useExecuteWorkflowMutation = () =>
     mutationFn: (workflowId: string) => executionApi.execute(workflowId),
     onSuccess: async (_, workflowId) => {
       await queryClient.invalidateQueries({
-        queryKey: executionKeys.lists(workflowId),
+        queryKey: executionKeys.workflow(workflowId),
       });
     },
   });

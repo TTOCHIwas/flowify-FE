@@ -11,7 +11,7 @@ export const useWorkflowChoicesQuery = (
   useQuery({
     queryKey:
       workflowId && prevNodeId
-        ? workflowKeys.choices(workflowId, prevNodeId)
+        ? workflowKeys.choice(workflowId, prevNodeId)
         : ["workflow", "choices", "idle"],
     queryFn: () => {
       if (!workflowId || !prevNodeId) {

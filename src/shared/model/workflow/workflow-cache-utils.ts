@@ -6,7 +6,7 @@ import type {
   NodeSelectionResult,
   WorkflowResponse,
 } from "../../api";
-import { workflowKeys } from "../../constants";
+import { executionKeys, workflowKeys } from "../../constants";
 import { queryClient } from "../../libs";
 
 export const cacheWorkflowDetail = (workflow: WorkflowResponse) => {
@@ -24,9 +24,15 @@ export const syncWorkflowCache = async (workflow: WorkflowResponse) => {
   await invalidateWorkflowLists();
 };
 
-export const removeWorkflowCache = async (workflowId: string) => {
+export const removeWorkflowDomainCache = async (workflowId: string) => {
   queryClient.removeQueries({
     queryKey: workflowKeys.detail(workflowId),
+  });
+  queryClient.removeQueries({
+    queryKey: workflowKeys.choicesRoot(workflowId),
+  });
+  queryClient.removeQueries({
+    queryKey: executionKeys.workflow(workflowId),
   });
   await invalidateWorkflowLists();
 };
