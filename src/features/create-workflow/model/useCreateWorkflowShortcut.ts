@@ -2,11 +2,11 @@ import { useCallback, useState } from "react";
 import { useNavigate } from "react-router";
 
 import {
-  QUERY_KEYS,
   ROUTE_PATHS,
   buildPath,
   queryClient,
   workflowApi,
+  workflowKeys,
 } from "@/shared";
 
 export const useCreateWorkflowShortcut = () => {
@@ -29,7 +29,7 @@ export const useCreateWorkflowShortcut = () => {
         trigger: null,
       });
 
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.workflows });
+      await queryClient.invalidateQueries({ queryKey: workflowKeys.lists() });
       navigate(buildPath.workflowEditor(workflow.id));
     } catch {
       navigate(ROUTE_PATHS.WORKFLOWS);

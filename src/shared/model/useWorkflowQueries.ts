@@ -10,7 +10,7 @@ import type {
   WorkflowResponse,
 } from "../api";
 import { workflowApi } from "../api";
-import { QUERY_KEYS } from "../constants";
+import { workflowKeys } from "../constants";
 import { queryClient } from "../libs";
 import { toWorkflowUpdateRequest } from "../libs/workflow-adapter";
 import type { WorkflowAdapterStoreState } from "../libs/workflow-adapter";
@@ -18,7 +18,7 @@ import type { PageResponse } from "../types";
 
 export const useWorkflowListQuery = (page = 0, size = 20, enabled = true) =>
   useQuery({
-    queryKey: [...QUERY_KEYS.workflows, { page, size }] as const,
+    queryKey: workflowKeys.list({ page, size }),
     queryFn: () => workflowApi.getList(page, size),
     enabled,
     throwOnError: false,
@@ -26,7 +26,7 @@ export const useWorkflowListQuery = (page = 0, size = 20, enabled = true) =>
 
 export const useInfiniteWorkflowListQuery = (size = 20, enabled = true) =>
   useInfiniteQuery({
-    queryKey: [...QUERY_KEYS.workflows, "infinite", { size }] as const,
+    queryKey: workflowKeys.infiniteList(size),
     queryFn: ({ pageParam }) => workflowApi.getList(pageParam, size),
     enabled,
     initialPageParam: 0,
@@ -39,7 +39,7 @@ export const useInfiniteWorkflowListQuery = (size = 20, enabled = true) =>
 
 export const useWorkflowQuery = (id: string | undefined) =>
   useQuery({
-    queryKey: id ? QUERY_KEYS.workflow(id) : ["workflows", "unknown"],
+    queryKey: id ? workflowKeys.detail(id) : ["workflow", "unknown"],
     queryFn: () => {
       if (!id) {
         throw new Error("workflow id is required");
@@ -60,11 +60,7 @@ export const useSaveWorkflowMutation = () =>
       workflowId: string;
       store: WorkflowAdapterStoreState;
     }) => workflowApi.update(workflowId, toWorkflowUpdateRequest(store)),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.workflows,
-      });
-    },
+    onSuccess: syncWorkflowCache,
   });
 
 export const useToggleWorkflowActiveMutation = () =>
@@ -83,9 +79,9 @@ export const useToggleWorkflowActiveMutation = () =>
   });
 
 const syncWorkflowCache = async (workflow: WorkflowResponse) => {
-  queryClient.setQueryData(QUERY_KEYS.workflow(workflow.id), workflow);
+  queryClient.setQueryData(workflowKeys.detail(workflow.id), workflow);
   await queryClient.invalidateQueries({
-    queryKey: QUERY_KEYS.workflows,
+    queryKey: workflowKeys.lists(),
   });
 };
 
@@ -121,8 +117,8 @@ export const useWorkflowChoicesQuery = (
   useQuery({
     queryKey:
       workflowId && prevNodeId
-        ? QUERY_KEYS.workflowChoices(workflowId, prevNodeId)
-        : ["workflows", "choices", "idle"],
+        ? workflowKeys.choices(workflowId, prevNodeId)
+        : ["workflow", "choices", "idle"],
     queryFn: () => {
       if (!workflowId || !prevNodeId) {
         throw new Error("workflow id and prev node id are required");

@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { executionApi } from "../api";
-import { QUERY_KEYS } from "../constants";
+import { executionKeys } from "../constants";
 import { queryClient } from "../libs";
 
 import type { ExecutionStatus } from "./workflowStore";
@@ -50,8 +50,8 @@ export const useWorkflowExecutionsQuery = (
 ) =>
   useQuery({
     queryKey: workflowId
-      ? QUERY_KEYS.executions(workflowId)
-      : ["workflows", "executions", "unknown"],
+      ? executionKeys.lists(workflowId)
+      : ["execution", "unknown"],
     queryFn: () => {
       if (!workflowId) {
         throw new Error("workflow id is required");
@@ -83,8 +83,8 @@ export const useWorkflowExecutionQuery = (
   useQuery({
     queryKey:
       workflowId && executionId
-        ? QUERY_KEYS.execution(workflowId, executionId)
-        : ["workflows", "execution", "unknown"],
+        ? executionKeys.detail(workflowId, executionId)
+        : ["execution", "detail", "unknown"],
     queryFn: () => {
       if (!workflowId || !executionId) {
         throw new Error("workflow id and execution id are required");
@@ -109,7 +109,7 @@ export const useExecuteWorkflowMutation = () =>
     mutationFn: (workflowId: string) => executionApi.execute(workflowId),
     onSuccess: async (_, workflowId) => {
       await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.executions(workflowId),
+        queryKey: executionKeys.lists(workflowId),
       });
     },
   });
@@ -127,7 +127,7 @@ export const useRollbackExecutionMutation = () =>
     }) => executionApi.rollback(workflowId, executionId, nodeId),
     onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.executions(variables.workflowId),
+        queryKey: executionKeys.lists(variables.workflowId),
       });
     },
   });
