@@ -1,18 +1,12 @@
-import { MdMoreHoriz, MdWidgets } from "react-icons/md";
+import { MdMoreHoriz } from "react-icons/md";
 
-import {
-  Box,
-  Flex,
-  HStack,
-  Icon,
-  IconButton,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
+import { Flex, HStack, IconButton, Text, VStack } from "@chakra-ui/react";
 
 import type { TemplateSummary } from "@/shared";
 
 import { getTemplateDescription } from "../model";
+
+import { TemplateServiceIcon } from "./TemplateServiceIcon";
 
 type Props = {
   template: TemplateSummary;
@@ -32,18 +26,10 @@ export const TemplateRow = ({ template, onOpen }: Props) => {
       borderRadius="10px"
     >
       <HStack gap={6} minW={0} flex={1}>
-        <Flex
-          boxSize="38px"
-          align="center"
-          justify="center"
-          borderRadius="lg"
-          bg="bg.overlay"
-          border="1px solid"
-          borderColor="border.default"
-          flexShrink={0}
-        >
-          <Icon as={MdWidgets} boxSize={5} color="text.primary" />
-        </Flex>
+        <TemplateServiceIcon
+          icon={template.icon}
+          requiredServices={template.requiredServices}
+        />
 
         <VStack align="stretch" gap={0.5} minW={0} flex={1}>
           <Text
@@ -57,7 +43,7 @@ export const TemplateRow = ({ template, onOpen }: Props) => {
           <Text fontSize="xs" color="text.primary" lineClamp={1}>
             {getTemplateDescription(template.description)}
           </Text>
-          <Box h="18px" />
+          <Flex h="18px" />
         </VStack>
       </HStack>
 
