@@ -1,18 +1,12 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { LoginResponse } from "./types";
 
-export const exchangeAuthAPI = async (
-  exchangeCode: string,
-): Promise<LoginResponse> => {
-  const { data } = await apiClient.post<ApiResponse<LoginResponse>>(
-    "/auth/exchange",
-    {
+export const exchangeAuthAPI = (exchangeCode: string): Promise<LoginResponse> =>
+  request<LoginResponse>({
+    url: "/auth/exchange",
+    method: "POST",
+    data: {
       exchangeCode,
     },
-  );
-
-  return processApiResponse(data);
-};
+  });

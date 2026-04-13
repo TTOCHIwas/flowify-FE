@@ -1,12 +1,9 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { OAuthTokenSummary } from "./types";
 
-export const getOAuthTokensAPI = async (): Promise<OAuthTokenSummary[]> => {
-  const { data } =
-    await apiClient.get<ApiResponse<OAuthTokenSummary[]>>("/oauth-tokens");
-
-  return processApiResponse(data);
-};
+export const getOAuthTokensAPI = (): Promise<OAuthTokenSummary[]> =>
+  request<OAuthTokenSummary[]>({
+    url: "/oauth-tokens",
+    method: "GET",
+  });

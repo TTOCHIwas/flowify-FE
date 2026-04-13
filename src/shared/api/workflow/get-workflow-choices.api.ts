@@ -1,16 +1,12 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { ChoiceResponse } from "./types";
 
-export const getWorkflowChoicesAPI = async (
+export const getWorkflowChoicesAPI = (
   workflowId: string,
   prevNodeId: string,
-): Promise<ChoiceResponse> => {
-  const { data } = await apiClient.get<ApiResponse<ChoiceResponse>>(
-    `/workflows/${workflowId}/choices/${prevNodeId}`,
-  );
-
-  return processApiResponse(data);
-};
+): Promise<ChoiceResponse> =>
+  request<ChoiceResponse>({
+    url: `/workflows/${workflowId}/choices/${prevNodeId}`,
+    method: "GET",
+  });

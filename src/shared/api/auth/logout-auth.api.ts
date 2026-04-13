@@ -1,9 +1,7 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
-export const logoutAuthAPI = async (): Promise<void> => {
-  const { data } = await apiClient.post<ApiResponse<void>>("/auth/logout");
-
-  return processApiResponse(data);
-};
+export const logoutAuthAPI = (): Promise<void> =>
+  request<void>({
+    url: "/auth/logout",
+    method: "POST",
+  });

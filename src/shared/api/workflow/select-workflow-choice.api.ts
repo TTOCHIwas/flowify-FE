@@ -1,18 +1,14 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { NodeChoiceSelectRequest, NodeSelectionResult } from "./types";
 
-export const selectWorkflowChoiceAPI = async (
+export const selectWorkflowChoiceAPI = (
   workflowId: string,
   prevNodeId: string,
   body: NodeChoiceSelectRequest,
-): Promise<NodeSelectionResult> => {
-  const { data } = await apiClient.post<ApiResponse<NodeSelectionResult>>(
-    `/workflows/${workflowId}/choices/${prevNodeId}/select`,
-    body,
-  );
-
-  return processApiResponse(data);
-};
+): Promise<NodeSelectionResult> =>
+  request<NodeSelectionResult>({
+    url: `/workflows/${workflowId}/choices/${prevNodeId}/select`,
+    method: "POST",
+    data: body,
+  });

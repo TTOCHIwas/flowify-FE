@@ -1,15 +1,11 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { ExecutionDetail } from "./types";
 
-export const getExecutionListAPI = async (
+export const getExecutionListAPI = (
   workflowId: string,
-): Promise<ExecutionDetail[]> => {
-  const { data } = await apiClient.get<ApiResponse<ExecutionDetail[]>>(
-    `/workflows/${workflowId}/executions`,
-  );
-
-  return processApiResponse(data);
-};
+): Promise<ExecutionDetail[]> =>
+  request<ExecutionDetail[]>({
+    url: `/workflows/${workflowId}/executions`,
+    method: "GET",
+  });

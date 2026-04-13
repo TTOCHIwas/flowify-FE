@@ -1,15 +1,11 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { InstantiateTemplateResponse } from "./types";
 
-export const instantiateTemplateAPI = async (
+export const instantiateTemplateAPI = (
   id: string,
-): Promise<InstantiateTemplateResponse> => {
-  const { data } = await apiClient.post<
-    ApiResponse<InstantiateTemplateResponse>
-  >(`/templates/${id}/instantiate`);
-
-  return processApiResponse(data);
-};
+): Promise<InstantiateTemplateResponse> =>
+  request<InstantiateTemplateResponse>({
+    url: `/templates/${id}/instantiate`,
+    method: "POST",
+  });

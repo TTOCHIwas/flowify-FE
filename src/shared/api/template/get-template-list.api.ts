@@ -1,18 +1,12 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { TemplateSummary } from "./types";
 
-export const getTemplateListAPI = async (
+export const getTemplateListAPI = (
   category?: string,
-): Promise<TemplateSummary[]> => {
-  const { data } = await apiClient.get<ApiResponse<TemplateSummary[]>>(
-    "/templates",
-    {
-      params: category ? { category } : undefined,
-    },
-  );
-
-  return processApiResponse(data);
-};
+): Promise<TemplateSummary[]> =>
+  request<TemplateSummary[]>({
+    url: "/templates",
+    method: "GET",
+    params: category ? { category } : undefined,
+  });

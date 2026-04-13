@@ -1,18 +1,12 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { LoginResponse } from "./types";
 
-export const refreshAuthAPI = async (
-  refreshToken: string,
-): Promise<LoginResponse> => {
-  const { data } = await apiClient.post<ApiResponse<LoginResponse>>(
-    "/auth/refresh",
-    {
+export const refreshAuthAPI = (refreshToken: string): Promise<LoginResponse> =>
+  request<LoginResponse>({
+    url: "/auth/refresh",
+    method: "POST",
+    data: {
       refreshToken,
     },
-  );
-
-  return processApiResponse(data);
-};
+  });

@@ -1,11 +1,7 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
-export const deleteWorkflowAPI = async (id: string): Promise<void> => {
-  const { data } = await apiClient.delete<ApiResponse<void>>(
-    `/workflows/${id}`,
-  );
-
-  return processApiResponse(data);
-};
+export const deleteWorkflowAPI = (id: string): Promise<void> =>
+  request<void>({
+    url: `/workflows/${id}`,
+    method: "DELETE",
+  });

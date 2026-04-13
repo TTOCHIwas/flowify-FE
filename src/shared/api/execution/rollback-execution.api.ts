@@ -1,19 +1,12 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
-export const rollbackExecutionAPI = async (
+export const rollbackExecutionAPI = (
   workflowId: string,
   executionId: string,
   nodeId?: string,
-): Promise<void> => {
-  const { data } = await apiClient.post<ApiResponse<void>>(
-    `/workflows/${workflowId}/executions/${executionId}/rollback`,
-    undefined,
-    {
-      params: nodeId ? { nodeId } : undefined,
-    },
-  );
-
-  return processApiResponse(data);
-};
+): Promise<void> =>
+  request<void>({
+    url: `/workflows/${workflowId}/executions/${executionId}/rollback`,
+    method: "POST",
+    params: nodeId ? { nodeId } : undefined,
+  });

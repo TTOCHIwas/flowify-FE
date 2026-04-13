@@ -1,16 +1,12 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { WorkflowGenerateRequest, WorkflowResponse } from "./types";
 
-export const generateWorkflowAPI = async (
+export const generateWorkflowAPI = (
   body: WorkflowGenerateRequest,
-): Promise<WorkflowResponse> => {
-  const { data } = await apiClient.post<ApiResponse<WorkflowResponse>>(
-    "/workflows/generate",
-    body,
-  );
-
-  return processApiResponse(data);
-};
+): Promise<WorkflowResponse> =>
+  request<WorkflowResponse>({
+    url: "/workflows/generate",
+    method: "POST",
+    data: body,
+  });

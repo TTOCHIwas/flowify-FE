@@ -1,16 +1,12 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { WorkflowResponse } from "./types";
 
-export const deleteWorkflowNodeAPI = async (
+export const deleteWorkflowNodeAPI = (
   workflowId: string,
   nodeId: string,
-): Promise<WorkflowResponse> => {
-  const { data } = await apiClient.delete<ApiResponse<WorkflowResponse>>(
-    `/workflows/${workflowId}/nodes/${nodeId}`,
-  );
-
-  return processApiResponse(data);
-};
+): Promise<WorkflowResponse> =>
+  request<WorkflowResponse>({
+    url: `/workflows/${workflowId}/nodes/${nodeId}`,
+    method: "DELETE",
+  });

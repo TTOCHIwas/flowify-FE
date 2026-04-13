@@ -1,15 +1,11 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { OAuthConnectResponse } from "./types";
 
-export const connectOAuthTokenAPI = async (
+export const connectOAuthTokenAPI = (
   service: string,
-): Promise<OAuthConnectResponse> => {
-  const { data } = await apiClient.post<ApiResponse<OAuthConnectResponse>>(
-    `/oauth-tokens/${service}/connect`,
-  );
-
-  return processApiResponse(data);
-};
+): Promise<OAuthConnectResponse> =>
+  request<OAuthConnectResponse>({
+    url: `/oauth-tokens/${service}/connect`,
+    method: "POST",
+  });

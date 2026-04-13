@@ -1,17 +1,13 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { ShareRequest } from "./types";
 
-export const shareWorkflowAPI = async (
+export const shareWorkflowAPI = (
   workflowId: string,
   body: ShareRequest,
-): Promise<void> => {
-  const { data } = await apiClient.post<ApiResponse<void>>(
-    `/workflows/${workflowId}/share`,
-    body,
-  );
-
-  return processApiResponse(data);
-};
+): Promise<void> =>
+  request<void>({
+    url: `/workflows/${workflowId}/share`,
+    method: "POST",
+    data: body,
+  });

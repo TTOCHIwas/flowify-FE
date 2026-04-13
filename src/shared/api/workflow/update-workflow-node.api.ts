@@ -1,18 +1,14 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { NodeUpdateRequest, WorkflowResponse } from "./types";
 
-export const updateWorkflowNodeAPI = async (
+export const updateWorkflowNodeAPI = (
   workflowId: string,
   nodeId: string,
   body: NodeUpdateRequest,
-): Promise<WorkflowResponse> => {
-  const { data } = await apiClient.put<ApiResponse<WorkflowResponse>>(
-    `/workflows/${workflowId}/nodes/${nodeId}`,
-    body,
-  );
-
-  return processApiResponse(data);
-};
+): Promise<WorkflowResponse> =>
+  request<WorkflowResponse>({
+    url: `/workflows/${workflowId}/nodes/${nodeId}`,
+    method: "PUT",
+    data: body,
+  });

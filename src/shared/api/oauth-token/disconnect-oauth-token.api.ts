@@ -1,13 +1,7 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
-export const disconnectOAuthTokenAPI = async (
-  service: string,
-): Promise<void> => {
-  const { data } = await apiClient.delete<ApiResponse<void>>(
-    `/oauth-tokens/${service}`,
-  );
-
-  return processApiResponse(data);
-};
+export const disconnectOAuthTokenAPI = (service: string): Promise<void> =>
+  request<void>({
+    url: `/oauth-tokens/${service}`,
+    method: "DELETE",
+  });

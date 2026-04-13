@@ -1,16 +1,12 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { CreateTemplateRequest, TemplateDetail } from "./types";
 
-export const createTemplateAPI = async (
+export const createTemplateAPI = (
   body: CreateTemplateRequest,
-): Promise<TemplateDetail> => {
-  const { data } = await apiClient.post<ApiResponse<TemplateDetail>>(
-    "/templates",
-    body,
-  );
-
-  return processApiResponse(data);
-};
+): Promise<TemplateDetail> =>
+  request<TemplateDetail>({
+    url: "/templates",
+    method: "POST",
+    data: body,
+  });

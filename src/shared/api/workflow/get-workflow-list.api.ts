@@ -1,19 +1,13 @@
-import type { ApiResponse } from "../../types";
-import { processApiResponse } from "../../utils";
-import { apiClient } from "../client";
+import { request } from "../core";
 
 import type { WorkflowListResponse } from "./types";
 
-export const getWorkflowListAPI = async (
+export const getWorkflowListAPI = (
   page = 0,
   size = 20,
-): Promise<WorkflowListResponse> => {
-  const { data } = await apiClient.get<ApiResponse<WorkflowListResponse>>(
-    "/workflows",
-    {
-      params: { page, size },
-    },
-  );
-
-  return processApiResponse(data);
-};
+): Promise<WorkflowListResponse> =>
+  request<WorkflowListResponse>({
+    url: "/workflows",
+    method: "GET",
+    params: { page, size },
+  });
