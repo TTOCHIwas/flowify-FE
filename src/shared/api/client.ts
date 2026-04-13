@@ -27,6 +27,7 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+export const publicApiClient = axios.create(apiClientConfig);
 const refreshClient = axios.create(apiClientConfig);
 
 let isRefreshing = false;
