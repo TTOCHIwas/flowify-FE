@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
-import type { MouseEvent } from "react";
+import { type MouseEvent } from "react";
 
 import {
   Background,
@@ -9,12 +9,12 @@ import {
   ReactFlow,
   useReactFlow,
 } from "@xyflow/react";
-import type {
-  DefaultEdgeOptions,
-  EdgeTypes,
-  Node,
-  NodeChange,
-  NodeTypes,
+import {
+  type DefaultEdgeOptions,
+  type EdgeTypes,
+  type Node,
+  type NodeChange,
+  type NodeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -39,7 +39,7 @@ import {
   TriggerNode,
   WebScrapingNode,
 } from "@/entities/node";
-import type { NodeType } from "@/entities/node";
+import { type NodeType } from "@/entities/node";
 import { isDataTypeCompatible } from "@/entities/node";
 import { useAddNode } from "@/features/add-node";
 import { useWorkflowStore } from "@/features/workflow-editor";

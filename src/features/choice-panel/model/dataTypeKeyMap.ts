@@ -1,7 +1,7 @@
-import type { DataType } from "@/entities/node";
-import type { NodeType } from "@/entities/node";
+import { type DataType } from "@/entities/node";
+import { type NodeType } from "@/entities/node";
 
-import type { MappingDataTypeKey, MappingNodeType } from "./types";
+import { type MappingDataTypeKey, type MappingNodeType } from "./types";
 
 // ─── DataType ↔ MappingDataTypeKey 변환 ─────────────────────
 

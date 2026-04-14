@@ -1,7 +1,7 @@
-import type { DataType } from "@/entities/node";
+import { type DataType } from "@/entities/node";
 
 import { MAPPING_RULES } from "./mappingRules";
-import type { MappingAction } from "./types";
+import { type MappingAction } from "./types";
 
 export const OUTPUT_DATA_LABELS: Record<DataType, string> = {
   "file-list": "파일 목록",

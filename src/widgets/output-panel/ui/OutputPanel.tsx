@@ -4,7 +4,7 @@ import { MdCancel } from "react-icons/md";
 import { Box, Icon, Spinner, Text, VStack } from "@chakra-ui/react";
 
 import { NODE_REGISTRY } from "@/entities/node";
-import type { DataType, NodeMeta, NodeType } from "@/entities/node";
+import { type DataType, type NodeMeta, type NodeType } from "@/entities/node";
 import {
   type ChoiceBranchConfig,
   type ChoiceFollowUp,
@@ -26,11 +26,11 @@ import {
   toDataType,
   toMappingKey,
 } from "@/features/choice-panel";
-import type {
-  BranchConfig,
-  FollowUp,
-  MappingAction,
-  MappingDataTypeKey,
+import {
+  type BranchConfig,
+  type FollowUp,
+  type MappingAction,
+  type MappingDataTypeKey,
 } from "@/features/choice-panel";
 import { PanelRenderer } from "@/features/configure-node";
 import { useWorkflowStore } from "@/features/workflow-editor";

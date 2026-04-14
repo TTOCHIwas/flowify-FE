@@ -1,8 +1,8 @@
 import { Text } from "@chakra-ui/react";
-import type { Node, NodeProps } from "@xyflow/react";
+import { type Node, type NodeProps } from "@xyflow/react";
 
 import { getTypedConfig } from "../../model";
-import type { FlowNodeData } from "../../model/types";
+import { type FlowNodeData } from "../../model/types";
 import { BaseNode } from "../BaseNode";
 
 const COMMUNICATION_SERVICE_LABEL: Record<"gmail" | "slack", string> = {

@@ -3,10 +3,10 @@ import { MdArrowBack } from "react-icons/md";
 
 import { Box, Button, Icon, Input, Text, VStack } from "@chakra-ui/react";
 
-import type {
-  ChoiceBranchConfig,
-  ChoiceFollowUp,
-  ChoiceOption,
+import {
+  type ChoiceBranchConfig,
+  type ChoiceFollowUp,
+  type ChoiceOption,
 } from "@/entities/workflow";
 
 interface SelectableOption extends ChoiceOption {

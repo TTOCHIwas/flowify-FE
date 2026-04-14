@@ -1,9 +1,9 @@
-import type { Edge, Node } from "@xyflow/react";
+import { type Edge, type Node } from "@xyflow/react";
 
-import type { FlowNodeData } from "@/entities/node";
-import type {
-  UpdateWorkflowRequest,
-  WorkflowResponse,
+import { type FlowNodeData } from "@/entities/node";
+import {
+  type UpdateWorkflowRequest,
+  type WorkflowResponse,
 } from "@/entities/workflow/api";
 import {
   toEdgeDefinition,

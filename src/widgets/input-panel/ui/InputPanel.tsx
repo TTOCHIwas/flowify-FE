@@ -3,7 +3,7 @@ import { MdCancel } from "react-icons/md";
 import { Box, Icon, Text } from "@chakra-ui/react";
 
 import { NODE_REGISTRY } from "@/entities/node";
-import type { FlowNodeData } from "@/entities/node";
+import { type FlowNodeData } from "@/entities/node";
 import {
   OUTPUT_DATA_LABELS,
   findActionById,

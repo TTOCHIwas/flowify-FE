@@ -1,6 +1,6 @@
 import { request } from "@/shared/api/core";
 
-import type { ExecutionDetail } from "./types";
+import { type ExecutionDetail } from "./types";
 
 export const getExecutionListAPI = (
   workflowId: string,

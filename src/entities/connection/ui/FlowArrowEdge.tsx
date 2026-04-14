@@ -1,10 +1,10 @@
-import type { CSSProperties } from "react";
+import { type CSSProperties } from "react";
 
 import { Box, Text } from "@chakra-ui/react";
 import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath } from "@xyflow/react";
-import type { EdgeProps } from "@xyflow/react";
+import { type EdgeProps } from "@xyflow/react";
 
-import type { FlowEdgeData } from "../model";
+import { type FlowEdgeData } from "../model";
 
 const ARROW_WIDTH = 40;
 const ARROW_HEIGHT = 18;

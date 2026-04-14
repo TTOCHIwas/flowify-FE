@@ -1,11 +1,11 @@
-import type { IconType } from "react-icons";
+import { type IconType } from "react-icons";
 
 import { NODE_REGISTRY } from "./nodeRegistry";
 import { getTypedConfig } from "./types";
-import type {
-  CommunicationNodeConfig,
-  FlowNodeData,
-  StorageNodeConfig,
+import {
+  type CommunicationNodeConfig,
+  type FlowNodeData,
+  type StorageNodeConfig,
 } from "./types";
 
 export type NodeRole = "source" | "process" | "destination";

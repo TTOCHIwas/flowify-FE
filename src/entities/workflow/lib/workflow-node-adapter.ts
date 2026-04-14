@@ -1,17 +1,17 @@
-import type { Edge, Node } from "@xyflow/react";
+import { type Edge, type Node } from "@xyflow/react";
 
 import { NODE_REGISTRY } from "@/entities/node";
-import type {
-  DataType,
-  FlowNodeData,
-  NodeConfig,
-  NodeType,
+import {
+  type DataType,
+  type FlowNodeData,
+  type NodeConfig,
+  type NodeType,
 } from "@/entities/node";
 
-import type {
-  EdgeDefinitionResponse,
-  NodeAddRequest,
-  NodeDefinitionResponse,
+import {
+  type EdgeDefinitionResponse,
+  type NodeAddRequest,
+  type NodeDefinitionResponse,
 } from "../api";
 
 const DATA_TYPE_MAP = {

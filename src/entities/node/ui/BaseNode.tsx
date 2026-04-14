@@ -1,12 +1,12 @@
 import { useState } from "react";
-import type { MouseEvent, ReactNode } from "react";
+import { type MouseEvent, type ReactNode } from "react";
 import { MdCancel } from "react-icons/md";
 
 import { Box, Icon, IconButton, Text } from "@chakra-ui/react";
 import { Handle, Position } from "@xyflow/react";
 
 import { getNodePresentation } from "../model";
-import type { FlowNodeData } from "../model/types";
+import { type FlowNodeData } from "../model/types";
 
 import { useNodeEditorContext } from "./NodeEditorContext";
 

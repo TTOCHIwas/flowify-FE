@@ -3,9 +3,9 @@ import {
   getRelativeTimeLabel,
   getServiceBadgeKeyFromService,
 } from "@/shared";
-import type {
-  NodeDefinitionResponse,
-  WorkflowResponse,
+import {
+  type NodeDefinitionResponse,
+  type WorkflowResponse,
 } from "@/entities/workflow";
 
 import { type ServiceBadgeKey, type WorkflowFilterKey } from "./types";

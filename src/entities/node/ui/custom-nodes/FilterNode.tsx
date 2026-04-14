@@ -1,8 +1,8 @@
 import { Text } from "@chakra-ui/react";
-import type { NodeProps } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
 
 import { getTypedConfig } from "../../model";
-import type { FlowNodeData } from "../../model/types";
+import { type FlowNodeData } from "../../model/types";
 import { BaseNode } from "../BaseNode";
 
 export const FilterNode = ({

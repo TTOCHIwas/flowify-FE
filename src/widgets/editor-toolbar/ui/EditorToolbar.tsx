@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { MdCheck, MdPlayArrow, MdRefresh, MdSave } from "react-icons/md";
 
 import {

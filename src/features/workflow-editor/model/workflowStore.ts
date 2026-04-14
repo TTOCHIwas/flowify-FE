@@ -1,19 +1,19 @@
 import { addEdge, applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
-import type {
-  Connection,
-  Edge,
-  EdgeChange,
-  Node,
-  NodeChange,
+import {
+  type Connection,
+  type Edge,
+  type EdgeChange,
+  type Node,
+  type NodeChange,
 } from "@xyflow/react";
 import { current } from "immer";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
-import type { FlowNodeData } from "@/entities/node";
+import { type FlowNodeData } from "@/entities/node";
 import { collectDescendantIds } from "@/shared/libs/graph";
 
-import type { WorkflowHydratedState } from "./workflow-editor-adapter";
+import { type WorkflowHydratedState } from "./workflow-editor-adapter";
 
 export type ExecutionStatus = "idle" | "running" | "success" | "failed";
 

@@ -1,4 +1,4 @@
-import type { IconType } from "react-icons";
+import { type IconType } from "react-icons";
 import {
   MdCalendarMonth,
   MdEmail,
@@ -15,7 +15,7 @@ import {
   SiSlack,
 } from "react-icons/si";
 
-import type { NodeType } from "@/entities/node";
+import { type NodeType } from "@/entities/node";
 
 /**
  * 카테고리(NodeType) 내 실제 서비스 정의.

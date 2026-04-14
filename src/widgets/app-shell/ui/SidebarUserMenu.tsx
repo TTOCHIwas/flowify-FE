@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { IconType } from "react-icons";
+import { type IconType } from "react-icons";
 import { useNavigate } from "react-router";
 
 import { Box, Button, VStack } from "@chakra-ui/react";

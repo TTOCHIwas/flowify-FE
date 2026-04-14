@@ -1,4 +1,4 @@
-import type { MappingRules } from "./types";
+import { type MappingRules } from "./types";
 
 /**
  * 1200개 시나리오에서 추출한 선택지 매핑 규칙.

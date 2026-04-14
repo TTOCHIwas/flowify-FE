@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 import {
   clearAuthSession,

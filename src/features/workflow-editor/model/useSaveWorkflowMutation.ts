@@ -6,7 +6,7 @@ import {
 } from "@/entities/workflow";
 import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
 
-import type { WorkflowEditorStoreState } from "./workflow-editor-adapter";
+import { type WorkflowEditorStoreState } from "./workflow-editor-adapter";
 import { toWorkflowUpdateRequest } from "./workflow-editor-adapter";
 
 type SaveWorkflowVariables = {

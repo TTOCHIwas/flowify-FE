@@ -18,8 +18,8 @@ import {
 } from "@chakra-ui/react";
 
 import { getNodesByCategory } from "@/entities/node";
-import type { NodeCategory } from "@/entities/node";
-import type { NodeType } from "@/entities/node";
+import { type NodeCategory } from "@/entities/node";
+import { type NodeType } from "@/entities/node";
 
 import { useAddNode } from "../model/useAddNode";
 

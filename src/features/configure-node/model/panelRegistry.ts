@@ -1,6 +1,6 @@
 import { CommunicationPanel } from "../ui/panels";
 
-import type { NodePanelRegistry } from "./types";
+import { type NodePanelRegistry } from "./types";
 
 /**
  * 각 노드 타입별 설정 패널을 연결하는 registry입니다.

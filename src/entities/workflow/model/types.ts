@@ -1,7 +1,7 @@
-import type { Edge, Node } from "@xyflow/react";
+import { type Edge, type Node } from "@xyflow/react";
 
-import type { FlowNodeData } from "@/entities/node";
-import type { ValidationWarning } from "@/shared";
+import { type FlowNodeData } from "@/entities/node";
+import { type ValidationWarning } from "@/shared";
 
 export type WorkflowStatus = "active" | "inactive";
 

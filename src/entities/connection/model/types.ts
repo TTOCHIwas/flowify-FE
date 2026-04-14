@@ -1,4 +1,4 @@
-import type { Edge } from "@xyflow/react";
+import { type Edge } from "@xyflow/react";
 
 // ─── 엣지 확장 타입 ──────────────────────────────────────────
 export interface FlowEdgeData extends Record<string, unknown> {

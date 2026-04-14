@@ -1,7 +1,7 @@
-import type {
-  EdgeDefinitionResponse,
-  NodeDefinitionResponse,
-  WorkflowResponse,
+import {
+  type EdgeDefinitionResponse,
+  type NodeDefinitionResponse,
+  type WorkflowResponse,
 } from "@/entities/workflow";
 
 export interface TemplateSummary {

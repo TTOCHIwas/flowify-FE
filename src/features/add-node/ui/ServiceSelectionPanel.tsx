@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { MdArrowBack, MdCancel, MdSearch } from "react-icons/md";
 
 import { Box, Grid, Icon, Input, Text, VStack } from "@chakra-ui/react";
@@ -19,11 +19,11 @@ import {
   useAddWorkflowNodeMutation,
   useDeleteWorkflowNodeMutation,
 } from "@/entities/workflow";
-import type { FlowNodeData, NodeMeta } from "@/entities/node";
+import { type FlowNodeData, type NodeMeta } from "@/entities/node";
 import { useWorkflowStore } from "@/features/workflow-editor";
 
 import { CATEGORY_SERVICE_MAP } from "../model/serviceMap";
-import type { ServiceOption } from "../model/serviceMap";
+import { type ServiceOption } from "../model/serviceMap";
 import {
   SERVICE_REQUIREMENTS,
   type ServiceRequirement,

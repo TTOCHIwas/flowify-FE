@@ -1,13 +1,13 @@
 import { executionKeys } from "@/shared/constants";
 import { queryClient } from "@/shared/libs";
-import type {
-  WorkflowSummary,
+import {
+  type WorkflowSummary,
 } from "./types";
 import { getWorkflowStatus } from "./types";
-import type {
-  ChoiceResponse,
-  NodeSelectionResult,
-  WorkflowResponse,
+import {
+  type ChoiceResponse,
+  type NodeSelectionResult,
+  type WorkflowResponse,
 } from "../api";
 
 import { workflowKeys } from "./query-keys";

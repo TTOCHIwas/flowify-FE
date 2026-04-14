@@ -1,6 +1,6 @@
 import { request } from "@/shared/api/core";
 
-import type { UpdateWorkflowRequest, WorkflowResponse } from "./types";
+import { type UpdateWorkflowRequest, type WorkflowResponse } from "./types";
 
 export const updateWorkflowAPI = (
   id: string,

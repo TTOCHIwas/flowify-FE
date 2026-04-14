@@ -1,4 +1,4 @@
-import type { IconType } from "react-icons";
+import { type IconType } from "react-icons";
 import {
   MdArticle,
   MdAutoAwesome,
@@ -17,8 +17,8 @@ import {
   MdTableChart,
 } from "react-icons/md";
 
-import type { DataType } from "./dataType";
-import type { NodeCategory, NodeConfig, NodeType } from "./types";
+import { type DataType } from "./dataType";
+import { type NodeCategory, type NodeConfig, type NodeType } from "./types";
 
 // ─── NodeMeta 인터페이스 ─────────────────────────────────────
 export interface NodeMeta {
