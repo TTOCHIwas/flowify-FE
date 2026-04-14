@@ -121,9 +121,21 @@ import { useUploadFiles } from "./useUploadFiles";
 | 상황 | 경로 방식 | 예시 |
 |------|----------|------|
 | **다른** FSD 레이어 참조 | `@/` 절대경로 | `import { BaseNode } from "@/entities"` |
-| **같은** FSD 레이어 참조 | `./` `../` 상대경로 | `import { useUploadFiles } from "./useUploadFiles"` |
+| **같은 슬라이스 내부** 참조 | `./` `../` 상대경로 | `import { useUploadFiles } from "./useUploadFiles"` |
+| **다른 슬라이스** 참조 | 슬라이스 공개 API(`index.ts`)만 사용 | `import { useWorkflowStore } from "@/features/workflow-editor"` |
+| **shared** 참조 | segment 단위 deep import 허용 | `import { request } from "@/shared/api/core"` |
 
-> **절대 혼용 금지**: 같은 레이어에서 `@/` 사용 금지, 다른 레이어에서 상대경로 사용 금지
+> **슬라이스 정의**: `features/add-node/`, `features/configure-node/`처럼 최상위 FSD 레이어 바로 아래의 각 폴더를 하나의 슬라이스로 본다. 형제 슬라이스는 같은 레이어여도 "다른 슬라이스"다.
+>
+> **금지 규칙**
+> - 같은 슬라이스 내부에서 `@/` 절대경로 사용 금지
+> - 다른 레이어를 상대경로로 참조 금지
+> - 다른 슬라이스의 내부 경로 직접 참조 금지
+>   - 금지 예: `@/widgets/app-shell/model/useSidebarState`
+>   - 허용 예: `@/widgets/app-shell`
+>
+> **예외**
+> - `shared`는 slice가 아니라 segment 레이어이므로 `@/shared/api/core`, `@/shared/libs/graph` 같은 segment 단위 deep import를 허용한다.
 
 ### 3.3 Type Import
 
@@ -137,6 +149,30 @@ import { type AssignmentType, useCreateProject } from "@/entities";
 import type { AssignmentType } from "@/entities";
 import { useCreateProject } from "@/entities";
 ```
+
+값 import와 타입 import가 같은 모듈에서 함께 필요하면 **한 줄로 병합**한다:
+
+```typescript
+// O 올바름
+import { addEdge, type Edge, type Node } from "@xyflow/react";
+
+// X 금지
+import { addEdge } from "@xyflow/react";
+import type { Edge, Node } from "@xyflow/react";
+```
+
+`import type` 스타일이 다시 생기지 않도록 ESLint에서 `@typescript-eslint/consistent-type-imports`를 강제한다.
+
+#### Type Import 일괄 정리 절차
+
+`lint:fix`로 import 스타일을 일괄 정리할 때는 아래 순서를 따른다.
+
+1. `pnpm lint`로 사전 clean 상태를 확인한다.
+2. `eslint.config.js`에 `@typescript-eslint/consistent-type-imports` 규칙을 추가한다.
+3. `pnpm lint:fix`를 실행한다.
+4. `git diff`를 검토해 변경이 import 스타일 정리만인지 확인한다.
+5. `pnpm tsc`, `pnpm build`를 다시 실행한다.
+6. 확인이 끝난 뒤 커밋한다.
 
 ### 3.4 배럴 파일 (index.ts)
 
