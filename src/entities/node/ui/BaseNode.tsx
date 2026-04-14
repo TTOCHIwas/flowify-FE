@@ -5,10 +5,10 @@ import { MdCancel } from "react-icons/md";
 import { Box, Icon, IconButton, Text } from "@chakra-ui/react";
 import { Handle, Position } from "@xyflow/react";
 
-import { useWorkflowStore } from "@/shared";
-
 import { getNodePresentation } from "../model";
 import type { FlowNodeData } from "../model/types";
+
+import { useNodeEditorContext } from "./NodeEditorContext";
 
 interface BaseNodeProps {
   id: string;
@@ -36,10 +36,8 @@ const getSummaryContent = (
 };
 
 export const BaseNode = ({ id, data, children }: BaseNodeProps) => {
-  const removeNode = useWorkflowStore((state) => state.removeNode);
-  const openPanel = useWorkflowStore((state) => state.openPanel);
-  const startNodeId = useWorkflowStore((state) => state.startNodeId);
-  const endNodeId = useWorkflowStore((state) => state.endNodeId);
+  const { endNodeId, onOpenPanel, onRemoveNode, startNodeId } =
+    useNodeEditorContext();
   const [isHovered, setIsHovered] = useState(false);
 
   const presentation = getNodePresentation(data, {
@@ -51,12 +49,12 @@ export const BaseNode = ({ id, data, children }: BaseNodeProps) => {
   const showNodeIcon = data.config.isConfigured;
 
   const handleOpenPanel = () => {
-    openPanel(id);
+    onOpenPanel(id);
   };
 
   const handleRemoveNode = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    removeNode(id);
+    onRemoveNode(id);
   };
 
   return (

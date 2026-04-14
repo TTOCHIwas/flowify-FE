@@ -30,6 +30,7 @@ import {
   LLMNode,
   LoopNode,
   MultiOutputNode,
+  NodeEditorProvider,
   NotificationNode,
   OutputFormatNode,
   PlaceholderNode,
@@ -180,9 +181,19 @@ export const Canvas = () => {
   const setActivePlaceholder = useWorkflowStore(
     (state) => state.setActivePlaceholder,
   );
+  const removeNode = useWorkflowStore((state) => state.removeNode);
   const openPanel = useWorkflowStore((state) => state.openPanel);
   const closePanel = useWorkflowStore((state) => state.closePanel);
   const { addNode } = useAddNode();
+  const nodeEditorContextValue = useMemo(
+    () => ({
+      startNodeId,
+      endNodeId,
+      onOpenPanel: openPanel,
+      onRemoveNode: removeNode,
+    }),
+    [endNodeId, openPanel, removeNode, startNodeId],
+  );
 
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -648,28 +659,30 @@ export const Canvas = () => {
   const isCanvasLocked = activePlaceholder !== null;
 
   return (
-    <ReactFlow
-      nodes={visibleNodes}
-      edges={visibleEdges}
-      defaultEdgeOptions={defaultEdgeOptions}
-      edgeTypes={edgeTypes}
-      nodeTypes={nodeTypes}
-      onNodesChange={handleNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={handleConnect}
-      onNodeClick={handleNodeClick}
-      onPaneClick={handlePaneClick}
-      panOnDrag={!isCanvasLocked}
-      panOnScroll={false}
-      nodesDraggable={!isCanvasLocked}
-      zoomOnScroll={!isCanvasLocked}
-      zoomOnPinch={!isCanvasLocked}
-      zoomOnDoubleClick={!isCanvasLocked}
-      fitView
-    >
-      <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
-      <Controls />
-      <MiniMap />
-    </ReactFlow>
+    <NodeEditorProvider value={nodeEditorContextValue}>
+      <ReactFlow
+        nodes={visibleNodes}
+        edges={visibleEdges}
+        defaultEdgeOptions={defaultEdgeOptions}
+        edgeTypes={edgeTypes}
+        nodeTypes={nodeTypes}
+        onNodesChange={handleNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={handleConnect}
+        onNodeClick={handleNodeClick}
+        onPaneClick={handlePaneClick}
+        panOnDrag={!isCanvasLocked}
+        panOnScroll={false}
+        nodesDraggable={!isCanvasLocked}
+        zoomOnScroll={!isCanvasLocked}
+        zoomOnPinch={!isCanvasLocked}
+        zoomOnDoubleClick={!isCanvasLocked}
+        fitView
+      >
+        <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
+        <Controls />
+        <MiniMap />
+      </ReactFlow>
+    </NodeEditorProvider>
   );
 };
