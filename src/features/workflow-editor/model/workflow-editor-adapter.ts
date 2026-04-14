@@ -1,16 +1,14 @@
-import type { Edge, Node } from "@xyflow/react";
+import { type Edge, type Node } from "@xyflow/react";
 
-import type { FlowNodeData } from "@/entities/node";
-import type {
-  UpdateWorkflowRequest,
-  WorkflowResponse,
-} from "@/entities/workflow/api";
+import { type FlowNodeData } from "@/entities/node";
 import {
+  type UpdateWorkflowRequest,
+  type WorkflowResponse,
   toEdgeDefinition,
   toFlowEdge,
   toFlowNode,
   toNodeDefinition,
-} from "@/entities/workflow/lib";
+} from "@/entities/workflow";
 
 export interface WorkflowEditorStoreState {
   workflowName: string;

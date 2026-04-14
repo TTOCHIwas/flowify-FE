@@ -1,6 +1,6 @@
 import { request } from "@/shared/api/core";
 
-import type { OAuthConnectResponse } from "./types";
+import { type OAuthConnectResponse } from "./types";
 
 export const connectOAuthTokenAPI = (
   service: string,

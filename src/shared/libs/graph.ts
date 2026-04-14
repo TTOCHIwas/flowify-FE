@@ -1,4 +1,4 @@
-import type { Edge } from "@xyflow/react";
+import { type Edge } from "@xyflow/react";
 
 /**
  * 시작 노드에서 엣지를 따라 하위 방향(source → target)으로 탐색하여

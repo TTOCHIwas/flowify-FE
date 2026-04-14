@@ -1,4 +1,4 @@
-import type { KeyboardEvent, MouseEvent } from "react";
+import { type KeyboardEvent, type MouseEvent } from "react";
 import {
   MdErrorOutline,
   MdMoreHoriz,
@@ -17,7 +17,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 
-import type { WorkflowResponse } from "@/entities/workflow";
+import { type WorkflowResponse } from "@/entities/workflow";
 
 import {
   getBuildProgressLabel,

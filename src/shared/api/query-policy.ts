@@ -1,12 +1,12 @@
-import type {
-  InfiniteData,
-  QueryKey,
-  UseInfiniteQueryOptions,
-  UseMutationOptions,
-  UseQueryOptions,
+import {
+  type InfiniteData,
+  type QueryKey,
+  type UseInfiniteQueryOptions,
+  type UseMutationOptions,
+  type UseQueryOptions,
 } from "@tanstack/react-query";
 
-import type { ApiError } from "../api/core";
+import { type ApiError } from "../api/core";
 
 type MetaPolicyOptions = {
   showErrorToast?: boolean;

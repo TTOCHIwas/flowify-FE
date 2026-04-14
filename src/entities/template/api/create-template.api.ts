@@ -1,6 +1,6 @@
 import { request } from "@/shared/api/core";
 
-import type { CreateTemplateRequest, TemplateDetail } from "./types";
+import { type CreateTemplateRequest, type TemplateDetail } from "./types";
 
 export const createTemplateAPI = (
   body: CreateTemplateRequest,

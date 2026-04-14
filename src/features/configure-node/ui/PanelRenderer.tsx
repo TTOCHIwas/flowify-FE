@@ -1,5 +1,5 @@
 import { Component } from "react";
-import type { ErrorInfo, ReactNode } from "react";
+import { type ErrorInfo, type ReactNode } from "react";
 
 import { Box, Text } from "@chakra-ui/react";
 

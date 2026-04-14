@@ -1,4 +1,4 @@
-import type { AuthSessionUser } from "@/shared";
+import { type AuthSessionUser } from "@/shared";
 
 export type AuthUser = AuthSessionUser;
 

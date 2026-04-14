@@ -1,6 +1,6 @@
 import { request } from "@/shared/api/core";
 
-import type { NodeChoiceSelectRequest, NodeSelectionResult } from "./types";
+import { type NodeChoiceSelectRequest, type NodeSelectionResult } from "./types";
 
 export const selectWorkflowChoiceAPI = (
   workflowId: string,

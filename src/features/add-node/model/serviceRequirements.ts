@@ -1,4 +1,4 @@
-import type { IconType } from "react-icons";
+import { type IconType } from "react-icons";
 import {
   MdDescription,
   MdDriveFileMove,
@@ -13,7 +13,7 @@ import {
   MdUploadFile,
 } from "react-icons/md";
 
-import type { NodeType } from "@/entities/node";
+import { type NodeType } from "@/entities/node";
 
 /**
  * 서비스 선택 후 보여줄 요구사항(use-case) 옵션.

@@ -1,7 +1,7 @@
 import { MdAdd, MdAutoAwesome } from "react-icons/md";
 
 import { Box, HStack, Icon, Text, VStack } from "@chakra-ui/react";
-import type { Node, NodeProps } from "@xyflow/react";
+import { type Node, type NodeProps } from "@xyflow/react";
 
 type CreationMethodNodeData = {
   onSelectManual?: () => void;

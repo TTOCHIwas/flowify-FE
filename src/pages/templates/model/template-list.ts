@@ -1,4 +1,4 @@
-import type { TemplateSummary } from "@/entities/template";
+import { type TemplateSummary } from "@/entities/template";
 import { getRelativeTimeLabel } from "@/shared";
 
 export const getRelativeCreatedLabel = (createdAt: string) =>

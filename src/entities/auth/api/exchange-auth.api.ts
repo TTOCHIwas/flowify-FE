@@ -1,7 +1,7 @@
 import { publicApiClient } from "@/shared/api";
 import { requestWithClient } from "@/shared/api/core";
 
-import type { LoginResponse } from "./types";
+import { type LoginResponse } from "./types";
 
 export const exchangeAuthAPI = (exchangeCode: string): Promise<LoginResponse> =>
   requestWithClient<LoginResponse>(publicApiClient, {

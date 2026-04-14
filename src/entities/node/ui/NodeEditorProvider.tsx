@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
 
-import type { NodeEditorContextValue } from "./NodeEditorContext";
+import { type NodeEditorContextValue } from "./NodeEditorContext";
 import { NodeEditorContext } from "./NodeEditorContext";
 
 type NodeEditorProviderProps = {

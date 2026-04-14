@@ -1,6 +1,6 @@
 import { request } from "@/shared/api/core";
 
-import type { TemplateSummary } from "./types";
+import { type TemplateSummary } from "./types";
 
 export const getTemplateListAPI = (
   category?: string,

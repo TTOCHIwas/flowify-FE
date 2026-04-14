@@ -1,10 +1,10 @@
 import { useRef } from "react";
 
-import type { Node } from "@xyflow/react";
+import { type Node } from "@xyflow/react";
 
 import { NODE_REGISTRY } from "@/entities/node";
-import type { DataType } from "@/entities/node";
-import type { FlowNodeData, NodeType } from "@/entities/node";
+import { type DataType } from "@/entities/node";
+import { type FlowNodeData, type NodeType } from "@/entities/node";
 import { useWorkflowStore } from "@/features/workflow-editor";
 
 const BASE_POSITION = { x: 250, y: 250 };

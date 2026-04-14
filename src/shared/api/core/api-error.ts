@@ -1,6 +1,6 @@
 import { isAxiosError } from "axios";
 
-import type { ApiResponse } from "../../types";
+import { type ApiResponse } from "../../types";
 
 export class ApiError extends Error {
   public readonly errorCode: string | null;

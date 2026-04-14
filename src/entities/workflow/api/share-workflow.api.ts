@@ -1,6 +1,6 @@
 import { request } from "@/shared/api/core";
 
-import type { ShareRequest } from "./types";
+import { type ShareRequest } from "./types";
 
 export const shareWorkflowAPI = (
   workflowId: string,

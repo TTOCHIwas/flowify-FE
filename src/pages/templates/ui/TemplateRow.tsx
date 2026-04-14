@@ -1,9 +1,9 @@
-import type { KeyboardEvent, MouseEvent } from "react";
+import { type KeyboardEvent, type MouseEvent } from "react";
 import { MdMoreHoriz } from "react-icons/md";
 
 import { Box, Flex, HStack, IconButton, Text, VStack } from "@chakra-ui/react";
 
-import type { TemplateSummary } from "@/entities/template";
+import { type TemplateSummary } from "@/entities/template";
 
 import {
   getRelativeCreatedLabel,

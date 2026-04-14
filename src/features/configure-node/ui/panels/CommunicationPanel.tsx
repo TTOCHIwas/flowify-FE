@@ -7,7 +7,7 @@ import {
 } from "@/entities/node";
 import { useWorkflowStore } from "@/features/workflow-editor";
 
-import type { NodePanelProps } from "../../model";
+import { type NodePanelProps } from "../../model";
 
 import { NodePanelShell } from "./NodePanelShell";
 

@@ -1,6 +1,6 @@
 import { request } from "@/shared/api/core";
 
-import type { InstantiateTemplateResponse } from "./types";
+import { type InstantiateTemplateResponse } from "./types";
 
 export const instantiateTemplateAPI = (
   id: string,

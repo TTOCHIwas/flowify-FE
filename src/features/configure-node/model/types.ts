@@ -1,6 +1,6 @@
-import type { ComponentType } from "react";
+import { type ComponentType } from "react";
 
-import type { FlowNodeData, NodeType } from "@/entities/node";
+import { type FlowNodeData, type NodeType } from "@/entities/node";
 
 export interface NodePanelProps {
   nodeId: string;

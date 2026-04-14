@@ -1,6 +1,6 @@
-import type { AxiosInstance, AxiosRequestConfig } from "axios";
+import { type AxiosInstance, type AxiosRequestConfig } from "axios";
 
-import type { ApiResponse } from "../../types";
+import { type ApiResponse } from "../../types";
 import { apiClient } from "../client";
 
 import {

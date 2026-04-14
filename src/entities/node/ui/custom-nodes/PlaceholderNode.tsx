@@ -1,7 +1,7 @@
 import { MdAdd } from "react-icons/md";
 
 import { Box, Icon, Text, VStack } from "@chakra-ui/react";
-import type { Node, NodeProps } from "@xyflow/react";
+import { type Node, type NodeProps } from "@xyflow/react";
 
 type PlaceholderNodeData = {
   label?: string;

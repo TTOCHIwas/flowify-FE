@@ -3,7 +3,7 @@ import { Box, Text } from "@chakra-ui/react";
 import { getNodePresentation } from "@/entities/node";
 import { useWorkflowStore } from "@/features/workflow-editor";
 
-import type { NodePanelProps } from "../../model";
+import { type NodePanelProps } from "../../model";
 
 import { NodePanelShell } from "./NodePanelShell";
 

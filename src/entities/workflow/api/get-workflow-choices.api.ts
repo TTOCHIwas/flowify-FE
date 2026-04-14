@@ -1,6 +1,6 @@
 import { request } from "@/shared/api/core";
 
-import type { ChoiceResponse } from "./types";
+import { type ChoiceResponse } from "./types";
 
 export const getWorkflowChoicesAPI = (
   workflowId: string,

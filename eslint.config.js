@@ -19,5 +19,23 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        {
+          prefer: 'type-imports',
+          disallowTypeAnnotations: false,
+          fixStyle: 'inline-type-imports',
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "ImportDeclaration[importKind='type']",
+          message:
+            '별도 `import type` 문 대신 인라인 `type` specifier를 사용하세요.',
+        },
+      ],
+    },
   },
 ])
