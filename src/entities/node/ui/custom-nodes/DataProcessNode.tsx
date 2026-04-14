@@ -1,5 +1,5 @@
 import { Text } from "@chakra-ui/react";
-import { type NodeProps } from "@xyflow/react";
+import { type Node, type NodeProps } from "@xyflow/react";
 
 import { getTypedConfig } from "../../model";
 import { type DataProcessNodeConfig, type FlowNodeData } from "../../model/types";
@@ -19,7 +19,7 @@ export const DataProcessNode = ({
   id,
   data,
   selected,
-}: NodeProps & { data: FlowNodeData }) => {
+}: NodeProps<Node<FlowNodeData>>) => {
   const config = getTypedConfig("data-process", data.config);
   return (
     <BaseNode id={id} data={data} selected={selected}>
