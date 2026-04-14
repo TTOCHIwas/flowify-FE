@@ -11,7 +11,7 @@ import {
 import type { ApiResponse } from "../types";
 import { processApiResponse } from "../utils";
 
-import type { LoginResponse } from "./auth.api";
+import type { LoginResponse } from "./auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const LOGIN_PATH = "/login";

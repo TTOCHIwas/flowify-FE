@@ -1,10 +1,9 @@
 import {
-  type NodeDefinitionResponse,
-  type WorkflowResponse,
   getDateTimestamp,
   getRelativeTimeLabel,
   getServiceBadgeKeyFromService,
 } from "@/shared";
+import type { NodeDefinitionResponse, WorkflowResponse } from "@/shared/api";
 
 import { type ServiceBadgeKey, type WorkflowFilterKey } from "./types";
 
@@ -42,7 +41,7 @@ export const getBuildProgressLabel = (workflow: WorkflowResponse) => {
     return isConfigured === true;
   }).length;
 
-  return `${configuredNodes}/${totalNodes} 구축`;
+  return `${configuredNodes}/${totalNodes} 구성`;
 };
 
 export const getWorkflowWarningMessages = (workflow: WorkflowResponse) =>

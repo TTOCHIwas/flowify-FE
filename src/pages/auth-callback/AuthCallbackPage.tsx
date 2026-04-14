@@ -5,11 +5,11 @@ import { Box, Button, Spinner, Text, VStack } from "@chakra-ui/react";
 
 import {
   ROUTE_PATHS,
-  authApi,
   clearAuthSession,
   storeAuthUser,
   storeTokens,
 } from "@/shared";
+import { authApi } from "@/shared/api";
 
 type CallbackState = "pending" | "error";
 

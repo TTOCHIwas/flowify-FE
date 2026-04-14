@@ -1,13 +1,8 @@
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router";
 
-import {
-  ROUTE_PATHS,
-  buildPath,
-  queryClient,
-  workflowApi,
-  workflowKeys,
-} from "@/shared";
+import { ROUTE_PATHS, buildPath, queryClient, workflowKeys } from "@/shared";
+import { workflowApi } from "@/shared/api";
 
 export const useCreateWorkflowShortcut = () => {
   const navigate = useNavigate();

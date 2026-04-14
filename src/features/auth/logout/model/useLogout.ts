@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router";
 
-import { ROUTE_PATHS, authApi, clearAuthSession } from "@/shared";
+import { ROUTE_PATHS, clearAuthSession } from "@/shared";
+import { authApi } from "@/shared/api";
 
 export const useLogout = () => {
   const navigate = useNavigate();

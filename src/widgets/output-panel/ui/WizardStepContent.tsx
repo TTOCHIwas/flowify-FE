@@ -7,7 +7,7 @@ import type {
   ChoiceBranchConfig,
   ChoiceFollowUp,
   ChoiceOption,
-} from "@/shared";
+} from "@/shared/api";
 
 interface SelectableOption extends ChoiceOption {
   description?: string;
