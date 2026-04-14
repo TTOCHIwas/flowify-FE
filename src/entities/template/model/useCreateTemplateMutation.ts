@@ -1,9 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { templateApi } from "../../api";
-import { templateKeys } from "../../constants";
-import { queryClient } from "../../libs";
 import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
+import { queryClient } from "@/shared";
+
+import { templateApi } from "../api";
+import { templateKeys } from "./query-keys";
 
 export const useCreateTemplateMutation = (
   options?: MutationPolicyOptions<

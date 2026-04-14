@@ -1,9 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
 
-import type { WorkflowResponse } from "../../api";
-import { templateApi } from "../../api";
-import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
-import { syncWorkflowCache } from "../workflow";
+import {
+  type MutationPolicyOptions,
+  toMutationMeta,
+  type WorkflowResponse,
+} from "@/shared/api";
+import { syncWorkflowCache } from "@/shared";
+
+import { templateApi } from "../api";
 
 export const useInstantiateTemplateMutation = (
   options?: MutationPolicyOptions<WorkflowResponse, string>,

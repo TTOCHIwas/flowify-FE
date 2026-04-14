@@ -8,4 +8,4 @@ export type {
   NodeSelectionResult,
   WorkflowResponse,
 } from "../api/workflow";
-export type { TemplateDetail, TemplateSummary } from "../api/template";
+export type { TemplateDetail, TemplateSummary } from "../../entities/template";

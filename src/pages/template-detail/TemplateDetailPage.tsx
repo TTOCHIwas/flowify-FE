@@ -11,10 +11,12 @@ import {
 } from "@chakra-ui/react";
 
 import {
-  ROUTE_PATHS,
-  buildPath,
   useInstantiateTemplateMutation,
   useTemplateQuery,
+} from "@/entities";
+import {
+  ROUTE_PATHS,
+  buildPath,
 } from "@/shared";
 
 const getTemplateDescription = (description: string) =>
