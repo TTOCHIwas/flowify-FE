@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import {
   AccountPage,
   AuthCallbackPage,
+  DashboardPage,
   LoginPage,
   MainPage,
   NotFoundPage,
@@ -33,6 +34,7 @@ export const Router = () => {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShellLayout />}>
+            <Route path={ROUTE_PATHS.DASHBOARD} element={<DashboardPage />} />
             <Route path={ROUTE_PATHS.ACCOUNT} element={<AccountPage />} />
             <Route path={ROUTE_PATHS.SETTINGS} element={<SettingsPage />} />
             <Route path={ROUTE_PATHS.TEMPLATES} element={<TemplatesPage />} />

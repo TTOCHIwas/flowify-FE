@@ -1,5 +1,6 @@
 export * from "./account";
 export * from "./auth-callback";
+export * from "./dashboard";
 export * from "./login";
 export * from "./main";
 export * from "./not-found";
