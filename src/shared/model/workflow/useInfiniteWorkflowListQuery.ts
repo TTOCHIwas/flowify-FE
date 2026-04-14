@@ -1,7 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-import type { WorkflowListResponse } from "../../api";
-import { workflowApi } from "../../api";
+import { type WorkflowListResponse, workflowApi } from "@/entities/workflow";
 import { workflowKeys } from "../../constants";
 import {
   type InfiniteQueryPolicyOptions,

@@ -1,7 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 
-import type { ShareRequest } from "../../api";
-import { workflowApi } from "../../api";
+import { type ShareRequest, workflowApi } from "@/entities/workflow";
 import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
 
 import { invalidateWorkflowLists } from "./workflow-cache-utils";

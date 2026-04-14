@@ -7,5 +7,5 @@ export type {
   NodeDefinitionResponse,
   NodeSelectionResult,
   WorkflowResponse,
-} from "../api/workflow";
+} from "../../entities/workflow";
 export type { TemplateDetail, TemplateSummary } from "../../entities/template";

@@ -2,7 +2,7 @@ import type {
   EdgeDefinitionResponse,
   NodeDefinitionResponse,
   WorkflowResponse,
-} from "@/shared/api";
+} from "@/entities/workflow";
 
 export interface TemplateSummary {
   id: string;

@@ -1,6 +1,6 @@
-import type { TriggerConfig, Workflow } from "@/entities/workflow";
+import type { PageResponse, ValidationWarning } from "@/shared";
 
-import type { PageResponse, ValidationWarning } from "../../types";
+import type { TriggerConfig, Workflow } from "../model";
 
 export type WorkflowListResponse = PageResponse<WorkflowResponse>;
 

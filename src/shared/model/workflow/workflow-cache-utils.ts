@@ -1,11 +1,10 @@
 import type { WorkflowSummary } from "@/entities/workflow";
 import { getWorkflowStatus } from "@/entities/workflow";
-
 import type {
   ChoiceResponse,
   NodeSelectionResult,
   WorkflowResponse,
-} from "../../api";
+} from "@/entities/workflow";
 import { executionKeys, workflowKeys } from "../../constants";
 import { queryClient } from "../../libs";
 

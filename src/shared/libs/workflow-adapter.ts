@@ -7,14 +7,13 @@ import type {
   NodeConfig,
   NodeType,
 } from "@/entities/node";
-
 import type {
   EdgeDefinitionResponse,
   NodeAddRequest,
   NodeDefinitionResponse,
   UpdateWorkflowRequest,
   WorkflowResponse,
-} from "../api";
+} from "@/entities/workflow";
 
 const DATA_TYPE_MAP = {
   FILE_LIST: "file-list",

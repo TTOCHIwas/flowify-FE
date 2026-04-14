@@ -1,4 +1,4 @@
-import { request } from "../core";
+import { request } from "@/shared/api/core";
 
 export const deleteWorkflowAPI = (id: string): Promise<void> =>
   request<void>({
