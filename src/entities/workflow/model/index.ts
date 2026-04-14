@@ -6,7 +6,6 @@ export * from "./useDeleteWorkflowMutation";
 export * from "./useDeleteWorkflowNodeMutation";
 export * from "./useGenerateWorkflowMutation";
 export * from "./useInfiniteWorkflowListQuery";
-export * from "./useSaveWorkflowMutation";
 export * from "./useSelectWorkflowChoiceMutation";
 export * from "./useShareWorkflowMutation";
 export * from "./useToggleWorkflowActiveMutation";

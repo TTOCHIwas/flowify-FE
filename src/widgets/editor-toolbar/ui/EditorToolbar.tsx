@@ -17,9 +17,9 @@ import {
   normalizeExecutionStatus,
   useExecuteWorkflowMutation,
   useRollbackExecutionMutation,
-  useSaveWorkflowMutation,
   useWorkflowExecutionsQuery,
 } from "@/entities";
+import { useSaveWorkflowMutation } from "@/features/workflow-editor";
 import { useWorkflowStore } from "@/features/workflow-editor";
 
 interface RunButtonConfig {
