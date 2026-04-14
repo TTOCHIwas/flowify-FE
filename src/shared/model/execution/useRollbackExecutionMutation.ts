@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { executionApi } from "../../api";
 import { executionKeys } from "../../constants";
 import { queryClient } from "../../libs";
-import { type MutationPolicyOptions, toMutationMeta } from "../query-policy";
+import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
 
 type RollbackExecutionVariables = {
   workflowId: string;
@@ -33,3 +33,4 @@ export const useRollbackExecutionMutation = (
       await options?.onError?.(error, variables, onMutateResult, context);
     },
   });
+

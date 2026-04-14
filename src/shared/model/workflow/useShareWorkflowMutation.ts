@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 
 import type { ShareRequest } from "../../api";
 import { workflowApi } from "../../api";
-import { type MutationPolicyOptions, toMutationMeta } from "../query-policy";
+import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
 
 import { invalidateWorkflowLists } from "./workflow-cache-utils";
 
@@ -27,3 +27,4 @@ export const useShareWorkflowMutation = (
       await options?.onError?.(error, variables, onMutateResult, context);
     },
   });
+

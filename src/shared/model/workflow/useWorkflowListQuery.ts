@@ -6,7 +6,7 @@ import {
   type QueryPolicyOptions,
   resolveQueryPolicyOptions,
   toQueryMeta,
-} from "../query-policy";
+} from "@/shared/api";
 
 export const useWorkflowListQuery = (
   page = 0,
@@ -30,3 +30,4 @@ export const useWorkflowListQuery = (
     throwOnError: false,
   });
 };
+

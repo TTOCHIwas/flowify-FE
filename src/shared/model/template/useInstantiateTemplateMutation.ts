@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 
 import type { WorkflowResponse } from "../../api";
 import { templateApi } from "../../api";
-import { type MutationPolicyOptions, toMutationMeta } from "../query-policy";
+import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
 import { syncWorkflowCache } from "../workflow";
 
 export const useInstantiateTemplateMutation = (
@@ -20,3 +20,4 @@ export const useInstantiateTemplateMutation = (
       await options?.onError?.(error, templateId, onMutateResult, context);
     },
   });
+

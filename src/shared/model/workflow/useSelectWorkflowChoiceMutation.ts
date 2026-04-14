@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { workflowApi } from "../../api";
 import { workflowKeys } from "../../constants";
 import { queryClient } from "../../libs";
-import { type MutationPolicyOptions, toMutationMeta } from "../query-policy";
+import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
 
 type SelectWorkflowChoiceVariables = {
   workflowId: string;
@@ -44,3 +44,4 @@ export const useSelectWorkflowChoiceMutation = (
       await options?.onError?.(error, variables, onMutateResult, context);
     },
   });
+

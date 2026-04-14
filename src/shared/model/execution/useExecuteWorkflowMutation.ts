@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { executionApi } from "../../api";
 import { executionKeys } from "../../constants";
 import { queryClient } from "../../libs";
-import { type MutationPolicyOptions, toMutationMeta } from "../query-policy";
+import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
 
 export const useExecuteWorkflowMutation = (
   options?: MutationPolicyOptions<string, string>,
@@ -22,3 +22,4 @@ export const useExecuteWorkflowMutation = (
       await options?.onError?.(error, workflowId, onMutateResult, context);
     },
   });
+

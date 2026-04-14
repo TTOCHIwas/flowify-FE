@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 
 import { workflowApi } from "../../api";
-import { type MutationPolicyOptions, toMutationMeta } from "../query-policy";
+import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
 
 import { syncWorkflowCache } from "./workflow-cache-utils";
 
@@ -31,3 +31,4 @@ export const useToggleWorkflowActiveMutation = (
       await options?.onError?.(error, variables, onMutateResult, context);
     },
   });
+

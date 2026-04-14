@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { workflowApi } from "../../api";
 import { workflowKeys } from "../../constants";
-import { type QueryPolicyOptions, toQueryMeta } from "../query-policy";
+import { type QueryPolicyOptions, toQueryMeta } from "@/shared/api";
 
 export const useWorkflowQuery = (
   id: string | undefined,
@@ -26,3 +26,4 @@ export const useWorkflowQuery = (
     meta: toQueryMeta(options),
     throwOnError: false,
   });
+

@@ -6,7 +6,7 @@ import {
   type QueryPolicyOptions,
   resolveQueryPolicyOptions,
   toQueryMeta,
-} from "../query-policy";
+} from "@/shared/api";
 
 export const useWorkflowChoicesQuery = (
   workflowId: string | undefined,
@@ -39,3 +39,4 @@ export const useWorkflowChoicesQuery = (
     throwOnError: false,
   });
 };
+

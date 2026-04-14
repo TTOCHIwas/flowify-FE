@@ -7,7 +7,7 @@ import {
   type InfiniteQueryPolicyOptions,
   resolveInfiniteQueryPolicyOptions,
   toQueryMeta,
-} from "../query-policy";
+} from "@/shared/api";
 
 export const useInfiniteWorkflowListQuery = (
   size = 20,
@@ -31,3 +31,4 @@ export const useInfiniteWorkflowListQuery = (
     throwOnError: false,
   });
 };
+

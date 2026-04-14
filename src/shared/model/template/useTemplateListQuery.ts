@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { templateApi } from "../../api";
 import { templateKeys } from "../../constants";
-import { type QueryPolicyOptions, toQueryMeta } from "../query-policy";
+import { type QueryPolicyOptions, toQueryMeta } from "@/shared/api";
 
 export const useTemplateListQuery = (
   category?: string,
@@ -20,3 +20,4 @@ export const useTemplateListQuery = (
     meta: toQueryMeta(options),
     throwOnError: false,
   });
+

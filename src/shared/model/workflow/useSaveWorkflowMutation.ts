@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { workflowApi } from "../../api";
 import type { WorkflowAdapterStoreState } from "../../libs/workflow-adapter";
 import { toWorkflowUpdateRequest } from "../../libs/workflow-adapter";
-import { type MutationPolicyOptions, toMutationMeta } from "../query-policy";
+import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
 
 import { syncWorkflowCache } from "./workflow-cache-utils";
 
@@ -31,3 +31,4 @@ export const useSaveWorkflowMutation = (
       await options?.onError?.(error, variables, onMutateResult, context);
     },
   });
+

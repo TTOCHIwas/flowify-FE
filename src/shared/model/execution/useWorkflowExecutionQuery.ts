@@ -6,7 +6,7 @@ import {
   type QueryPolicyOptions,
   resolveQueryPolicyOptions,
   toQueryMeta,
-} from "../query-policy";
+} from "@/shared/api";
 
 import { executionPollInterval, isExecutionInFlight } from "./execution-utils";
 
@@ -52,3 +52,4 @@ export const useWorkflowExecutionQuery = (
     throwOnError: false,
   });
 };
+

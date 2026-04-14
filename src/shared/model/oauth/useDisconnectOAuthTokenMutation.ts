@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { oauthApi } from "../../api";
 import { oauthKeys } from "../../constants";
 import { queryClient } from "../../libs";
-import { type MutationPolicyOptions, toMutationMeta } from "../query-policy";
+import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
 
 export const useDisconnectOAuthTokenMutation = (
   options?: MutationPolicyOptions<void, string>,
@@ -22,3 +22,4 @@ export const useDisconnectOAuthTokenMutation = (
       await options?.onError?.(error, service, onMutateResult, context);
     },
   });
+

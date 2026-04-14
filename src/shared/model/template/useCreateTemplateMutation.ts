@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { templateApi } from "../../api";
 import { templateKeys } from "../../constants";
 import { queryClient } from "../../libs";
-import { type MutationPolicyOptions, toMutationMeta } from "../query-policy";
+import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
 
 export const useCreateTemplateMutation = (
   options?: MutationPolicyOptions<
@@ -26,3 +26,4 @@ export const useCreateTemplateMutation = (
       await options?.onError?.(error, variables, onMutateResult, context);
     },
   });
+
