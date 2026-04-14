@@ -11,16 +11,16 @@ import {
   Text,
 } from "@chakra-ui/react";
 
-import type { ExecutionStatus } from "@/shared";
 import {
+  type ExecutionStatus,
   getLatestExecution,
   normalizeExecutionStatus,
   useExecuteWorkflowMutation,
   useRollbackExecutionMutation,
-  useSaveWorkflowMutation,
   useWorkflowExecutionsQuery,
-  useWorkflowStore,
-} from "@/shared";
+} from "@/entities";
+import { useSaveWorkflowMutation } from "@/features/workflow-editor";
+import { useWorkflowStore } from "@/features/workflow-editor";
 
 interface RunButtonConfig {
   colorPalette: string;

@@ -1,10 +1,12 @@
 import {
-  type NodeDefinitionResponse,
-  type WorkflowResponse,
   getDateTimestamp,
   getRelativeTimeLabel,
   getServiceBadgeKeyFromService,
 } from "@/shared";
+import type {
+  NodeDefinitionResponse,
+  WorkflowResponse,
+} from "@/entities/workflow";
 
 import { type ServiceBadgeKey, type WorkflowFilterKey } from "./types";
 

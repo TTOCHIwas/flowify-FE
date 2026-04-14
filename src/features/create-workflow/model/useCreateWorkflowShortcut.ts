@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router";
 
-import { ROUTE_PATHS, buildPath, useCreateWorkflowMutation } from "@/shared";
+import { useCreateWorkflowMutation } from "@/entities/workflow";
+import { ROUTE_PATHS, buildPath } from "@/shared";
 
 export const useCreateWorkflowShortcut = () => {
   const navigate = useNavigate();

@@ -3,7 +3,7 @@ import { MdMoreHoriz } from "react-icons/md";
 
 import { Box, Flex, HStack, IconButton, Text, VStack } from "@chakra-ui/react";
 
-import type { TemplateSummary } from "@/shared";
+import type { TemplateSummary } from "@/entities/template";
 
 import {
   getRelativeCreatedLabel,

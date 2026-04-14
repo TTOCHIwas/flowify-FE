@@ -7,7 +7,7 @@ import type {
   ChoiceBranchConfig,
   ChoiceFollowUp,
   ChoiceOption,
-} from "@/shared";
+} from "@/entities/workflow";
 
 interface SelectableOption extends ChoiceOption {
   description?: string;

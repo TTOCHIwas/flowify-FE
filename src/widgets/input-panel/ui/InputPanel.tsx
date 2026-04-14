@@ -10,7 +10,8 @@ import {
   readCustomInputs,
   readSelectionSummary,
 } from "@/features/choice-panel";
-import { useDualPanelLayout, useWorkflowStore } from "@/shared";
+import { useWorkflowStore } from "@/features/workflow-editor";
+import { useDualPanelLayout } from "@/shared";
 
 const PANEL_TRANSITION_MS = 240;
 

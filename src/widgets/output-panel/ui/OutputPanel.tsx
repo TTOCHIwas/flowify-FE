@@ -5,6 +5,19 @@ import { Box, Icon, Spinner, Text, VStack } from "@chakra-ui/react";
 
 import { NODE_REGISTRY } from "@/entities/node";
 import type { DataType, NodeMeta, NodeType } from "@/entities/node";
+import {
+  type ChoiceBranchConfig,
+  type ChoiceFollowUp,
+  type ChoiceOption,
+  type ChoiceResponse,
+  findAddedNodeId,
+  toFlowNode,
+  toNodeAddRequest,
+  useAddWorkflowNodeMutation,
+  useDeleteWorkflowNodeMutation,
+  useSelectWorkflowChoiceMutation,
+  useWorkflowChoicesQuery,
+} from "@/entities/workflow";
 import { useAddNode } from "@/features/add-node";
 import {
   MAPPING_NODE_TYPE_MAP,
@@ -20,23 +33,8 @@ import type {
   MappingDataTypeKey,
 } from "@/features/choice-panel";
 import { PanelRenderer } from "@/features/configure-node";
-import {
-  findAddedNodeId,
-  toFlowNode,
-  toNodeAddRequest,
-  useAddWorkflowNodeMutation,
-  useDeleteWorkflowNodeMutation,
-  useDualPanelLayout,
-  useSelectWorkflowChoiceMutation,
-  useWorkflowChoicesQuery,
-  useWorkflowStore,
-} from "@/shared";
-import type {
-  ChoiceBranchConfig,
-  ChoiceFollowUp,
-  ChoiceOption,
-  ChoiceResponse,
-} from "@/shared";
+import { useWorkflowStore } from "@/features/workflow-editor";
+import { useDualPanelLayout } from "@/shared";
 
 import {
   ActionStep,

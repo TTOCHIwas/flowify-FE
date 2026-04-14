@@ -1,6 +1,5 @@
+import { useTemplateListQuery } from "@/entities";
 import { useMemo } from "react";
-
-import { useTemplateListQuery } from "@/shared";
 
 export const useTemplateListData = () => {
   const { data, isLoading, isError, refetch } = useTemplateListQuery();
