@@ -9,7 +9,7 @@ import {
   storeAuthUser,
   storeTokens,
 } from "@/shared";
-import { authApi } from "@/shared/api";
+import { authApi } from "@/entities";
 import {
   authCallbackFallbackMessage,
   resolveAuthExchangeError,

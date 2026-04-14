@@ -1,5 +1,5 @@
-import { publicApiClient } from "../client";
-import { requestWithClient } from "../core";
+import { publicApiClient } from "@/shared/api";
+import { requestWithClient } from "@/shared/api/core";
 
 import type { LoginResponse } from "./types";
 

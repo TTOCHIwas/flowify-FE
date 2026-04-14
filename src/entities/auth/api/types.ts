@@ -1,4 +1,4 @@
-import type { AuthSessionUser } from "../../libs/auth-session";
+import type { AuthSessionUser } from "@/shared";
 
 export type AuthUser = AuthSessionUser;
 
