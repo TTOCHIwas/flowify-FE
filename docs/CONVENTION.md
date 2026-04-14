@@ -745,22 +745,27 @@ useWorkflowStore((s) => s.panelWidth); // 금지
 
 ### 8.1 파일 구조
 
-액션별 1파일 원칙:
+액션별 1파일 원칙을 유지하되, 모든 API 함수는 공통 `request` 경계를 사용한다.
 
 ```
 shared/api/
-├── client.ts                  # Axios 인스턴스 + 인터셉터
-entities/project/model/apis/
-├── project-list.api.ts        # GET /api/projects
-├── create-project.api.ts      # POST /api/projects
-├── delete-project.api.ts      # DELETE /api/projects/:id
-└── index.ts                   # 배럴 export
+├── client.ts                  # Axios 인스턴스 + 401 refresh + redirect
+├── core/
+│   ├── api-error.ts           # ApiError, normalizeApiError, cancel 판별
+│   ├── request.ts             # request, requestWithClient, unwrap
+│   └── index.ts
+├── workflow/
+│   ├── get-workflow-list.api.ts
+│   ├── create-workflow.api.ts
+│   └── index.ts
+└── ...
 ```
 
 ### 8.2 API 함수 패턴
 
 ```typescript
-import { type ApiResponse, fetchInstance, processApiResponse } from "@/shared";
+import { request } from "@/shared/api/core";
+import type { PageResponse } from "@/shared/types";
 
 import type { Project } from "../types";
 
@@ -770,34 +775,31 @@ export interface ProjectListParameters {
   sort?: string;
 }
 
-export const getProjectListAPI = async (
+export const getProjectListAPI = (
   params: ProjectListParameters,
-): Promise<ProjectListResponse> => {
-  const response = await fetchInstance.get<ApiResponse<ProjectListResponse>>(
-    "/api/projects",
-    { params },
-  );
-  return processApiResponse(response.data);
-};
+): Promise<PageResponse<Project>> =>
+  request<PageResponse<Project>>({
+    url: "/api/projects",
+    method: "GET",
+    params,
+  });
 ```
 
 ### 8.3 응답 타입 체계
 
 ```typescript
-interface BaseResponse {
-  status: "SUCCESS" | "ERROR";
-  serverDateTime: string;
-}
-
-interface SuccessResponse<T> extends BaseResponse {
-  status: "SUCCESS";
+interface SuccessResponse<T> {
+  success: true;
   data: T;
+  message: string | null;
+  errorCode: null;
 }
 
-interface ErrorResponse extends BaseResponse {
-  status: "ERROR";
+interface ErrorResponse {
+  success: false;
+  data: null;
+  message: string;
   errorCode: string;
-  errorMessage: string;
 }
 
 type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
@@ -809,18 +811,22 @@ type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
 // Request: Bearer 토큰 자동 부착
 apiClient.interceptors.request.use((config) => {
   const token = getAccessToken();
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
-// Response: 401 시 토큰 갱신 → 실패 시 로그아웃 + /login 리다이렉트
+// Response: 401 시 refresh → 실패 시 로그인 리다이렉트
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    // 토큰 갱신 로직 + 요청 큐잉
+    // refresh 큐잉 + 실패 시 clear session + /login redirect
   },
 );
 ```
+
+> `client.ts`는 transport concern만 가진다. 응답 언래핑과 일반 에러 정규화는 `request()`가 맡는다.
 
 ### 8.5 어댑터 패턴 (프론트 ↔ 백엔드 변환)
 
@@ -839,52 +845,93 @@ toFrontendDataType()     // "FILE_LIST" → "file-list"
 ### 9.1 쿼리 키 팩토리
 
 ```typescript
-const PROJECT_QUERY_KEY = "project";
+export const workflowKeys = {
+  all: () => ["workflow"] as const,
+  lists: () => [...workflowKeys.all(), "list"] as const,
+  list: (params: { page: number; size: number }) =>
+    [...workflowKeys.lists(), params.page, params.size] as const,
+  details: () => [...workflowKeys.all(), "detail"] as const,
+  detail: (id: string) => [...workflowKeys.details(), id] as const,
+  choicesRoot: (workflowId: string) =>
+    [...workflowKeys.detail(workflowId), "choices"] as const,
+  choice: (workflowId: string, prevNodeId: string) =>
+    [...workflowKeys.choicesRoot(workflowId), prevNodeId] as const,
+};
 
-export const projectKeys = {
-  all: () => [PROJECT_QUERY_KEY] as const,
-  lists: () => [...projectKeys.all(), "list"] as const,
-  details: () => [...projectKeys.all(), "detail"] as const,
-  list: (params) => [...projectKeys.lists(), params.page, params.size] as const,
-  detail: (id: string) => [...projectKeys.details(), id] as const,
+export const executionKeys = {
+  all: () => ["execution"] as const,
+  workflow: (workflowId: string) =>
+    [...executionKeys.all(), "workflow", workflowId] as const,
+  lists: (workflowId: string) =>
+    [...executionKeys.workflow(workflowId), "list"] as const,
+  detail: (workflowId: string, executionId: string) =>
+    [...executionKeys.workflow(workflowId), "detail", executionId] as const,
 };
 ```
 
 ### 9.2 Query 훅
 
+Public hook은 `meta`를 직접 받지 않고, 제한된 React Query 옵션과 화면 정책 옵션을 받는다.
+
 ```typescript
-export const useGetProjectList = (params: ProjectListParameters = {}) => {
-  return useQuery({
-    queryKey: projectKeys.list(params),
-    queryFn: () => getProjectListAPI(params),
-    throwOnError: false,
-    meta: {
-      showErrorToast: true,
-      errorMessage: "프로젝트 목록을 불러오지 못했습니다.",
-    },
-  });
+type QueryPolicyOptions<TQueryFnData, TData = TQueryFnData> = Pick<
+  UseQueryOptions<TQueryFnData, ApiError, TData>,
+  "enabled" | "select" | "retry" | "staleTime" | "refetchInterval"
+> & {
+  showErrorToast?: boolean;
+  errorMessage?: string;
 };
+
+export const useWorkflowListQuery = (
+  page = 0,
+  size = 20,
+  options?: QueryPolicyOptions<PageResponse<WorkflowResponse>>,
+) =>
+  useQuery({
+    queryKey: workflowKeys.list({ page, size }),
+    queryFn: () => getWorkflowListAPI(page, size),
+    enabled: options?.enabled ?? true,
+    select: options?.select,
+    retry: options?.retry,
+    staleTime: options?.staleTime,
+    refetchInterval: options?.refetchInterval,
+    meta: {
+      showErrorToast: options?.showErrorToast,
+      errorMessage: options?.errorMessage,
+    },
+    throwOnError: false,
+  });
 ```
 
 ### 9.3 Mutation 훅
 
 ```typescript
-export const useCreateProject = () => {
-  const setProjectId = useUploadFlowStore((state) => state.setProjectId);
+type MutationPolicyOptions<TData, TVariables> = Pick<
+  UseMutationOptions<TData, ApiError, TVariables>,
+  "onSuccess" | "onError" | "retry"
+> & {
+  showErrorToast?: boolean;
+  errorMessage?: string;
+};
 
-  return useMutation({
-    mutationFn: createProjectAPI,
-    onSuccess: (data) => {
-      setProjectId(data.projectId);
+export const useCreateWorkflowMutation = (
+  options?: MutationPolicyOptions<WorkflowResponse, WorkflowCreateRequest>,
+) =>
+  useMutation({
+    mutationFn: createWorkflowAPI,
+    retry: options?.retry,
+    meta: {
+      showErrorToast: options?.showErrorToast,
+      errorMessage: options?.errorMessage,
     },
-    onError: (error) => {
-      toaster.create({
-        type: "error",
-        description: getApiErrorMessage(error),
-      });
+    onSuccess: async (data, variables, context) => {
+      await syncWorkflowCache(data);
+      await options?.onSuccess?.(data, variables, context);
+    },
+    onError: async (error, variables, context) => {
+      await options?.onError?.(error, variables, context);
     },
   });
-};
 ```
 
 ### 9.4 QueryClient 기본 설정
@@ -893,20 +940,47 @@ export const useCreateProject = () => {
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
-      if (query.meta?.showErrorToast !== true) return;
-      const message = typeof query.meta?.errorMessage === "string"
-        ? query.meta.errorMessage
-        : getApiErrorMessage(error);
+      if (isCanceledRequestError(error)) {
+        return;
+      }
+
+      if (query.meta?.showErrorToast !== true) {
+        return;
+      }
+
+      const message =
+        typeof query.meta?.errorMessage === "string"
+          ? query.meta.errorMessage
+          : getApiErrorMessage(error);
+
+      toaster.create({ type: "error", description: message });
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _context, mutation) => {
+      if (isCanceledRequestError(error)) {
+        return;
+      }
+
+      if (mutation.meta?.showErrorToast === false) {
+        return;
+      }
+
+      const message =
+        typeof mutation.meta?.errorMessage === "string"
+          ? mutation.meta.errorMessage
+          : getApiErrorMessage(error);
+
       toaster.create({ type: "error", description: message });
     },
   }),
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 1000 * 60 * 3,      // 3분
+      staleTime: 1000 * 60 * 3,
       refetchOnMount: false,
       refetchOnWindowFocus: false,
-      throwOnError: true,
+      throwOnError: false,
     },
   },
 });
@@ -920,14 +994,21 @@ export const queryClient = new QueryClient({
 
 ```typescript
 export class ApiError extends Error {
-  public readonly errorCode: string;
-  public readonly serverDateTime: string;
+  public readonly errorCode: string | null;
+  public readonly statusCode: number | null;
+  public readonly isNetworkError: boolean;
 
-  constructor(errorResponse: ErrorResponse) {
-    super(errorResponse.errorMessage);
+  constructor(params: {
+    message: string;
+    errorCode?: string | null;
+    statusCode?: number | null;
+    isNetworkError?: boolean;
+  }) {
+    super(params.message);
     this.name = "ApiError";
-    this.errorCode = errorResponse.errorCode;
-    this.serverDateTime = errorResponse.serverDateTime;
+    this.errorCode = params.errorCode ?? null;
+    this.statusCode = params.statusCode ?? null;
+    this.isNetworkError = params.isNetworkError ?? false;
   }
 }
 ```
@@ -940,13 +1021,13 @@ export const HTTP_ERROR_MESSAGES = {
   401: "인증이 필요합니다. 다시 로그인해주세요.",
   403: "권한이 없습니다.",
   404: "요청한 리소스를 찾을 수 없습니다.",
+  409: "중복된 데이터입니다.",
   500: "서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
   default: "요청을 처리할 수 없습니다.",
 } as const;
 
 export const API_ERROR_MESSAGES = {
   DUPLICATE_USER_ID: "이미 사용 중인 아이디입니다.",
-  // 프로젝트별 에러 코드 매핑 추가
 } as const;
 ```
 
@@ -954,11 +1035,13 @@ export const API_ERROR_MESSAGES = {
 
 ```
 API 호출 실패
-  → processApiResponse()에서 ApiError throw
-  → React Query onError / QueryCache.onError에서 catch
-  → getApiErrorMessage()로 사용자 메시지 변환
-  → toaster.create()로 토스트 표시
+  → request()에서 unwrap / normalizeApiError()
+  → ApiError 또는 취소 요청으로 정리
+  → QueryClient onError에서 토스트 정책 적용
+  → getApiErrorMessage()가 최종 사용자 메시지 생성
 ```
+
+> `normalizeApiError()`는 구조 정규화만 담당하고, 사용자 메시지 결정은 `getApiErrorMessage()`가 맡는다.
 
 ---
 

@@ -1,7 +1,3 @@
-import type { ApiResponse } from "../types";
-
-import { apiClient } from "./client";
-
 export type ExecutionRunStatus = "pending" | "running" | "success" | "failed";
 
 export interface ExecutionErrorDetail {
@@ -39,27 +35,3 @@ export interface ExecutionDetail {
   startedAt: string | null;
   finishedAt: string | null;
 }
-
-export const executionApi = {
-  execute: (workflowId: string) =>
-    apiClient.post<ApiResponse<string>>(`/workflows/${workflowId}/execute`),
-
-  getList: (workflowId: string) =>
-    apiClient.get<ApiResponse<ExecutionDetail[]>>(
-      `/workflows/${workflowId}/executions`,
-    ),
-
-  getById: (workflowId: string, execId: string) =>
-    apiClient.get<ApiResponse<ExecutionDetail>>(
-      `/workflows/${workflowId}/executions/${execId}`,
-    ),
-
-  rollback: (workflowId: string, execId: string, nodeId?: string) =>
-    apiClient.post<ApiResponse<void>>(
-      `/workflows/${workflowId}/executions/${execId}/rollback`,
-      undefined,
-      {
-        params: nodeId ? { nodeId } : undefined,
-      },
-    ),
-};

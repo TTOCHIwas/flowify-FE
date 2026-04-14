@@ -1,9 +1,21 @@
-export type ApiResponse<T> = {
+interface BaseResponse {
   success: boolean;
-  data: T;
   message: string | null;
   errorCode: string | null;
-};
+}
+
+interface SuccessResponse<T> extends BaseResponse {
+  success: true;
+  data: T;
+}
+
+export interface ErrorResponse extends BaseResponse {
+  success: false;
+  errorCode: string;
+  message: string;
+}
+
+export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
 
 export type PageResponse<T> = {
   content: T[];

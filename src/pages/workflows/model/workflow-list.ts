@@ -42,7 +42,7 @@ export const getBuildProgressLabel = (workflow: WorkflowResponse) => {
     return isConfigured === true;
   }).length;
 
-  return `${configuredNodes}/${totalNodes} 구축`;
+  return `${configuredNodes}/${totalNodes} 구성`;
 };
 
 export const getWorkflowWarningMessages = (workflow: WorkflowResponse) =>

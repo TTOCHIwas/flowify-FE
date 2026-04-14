@@ -8,9 +8,9 @@ import {
   storeAuthUser,
   storeTokens,
 } from "../libs/auth-session";
-import type { ApiResponse } from "../types";
 
-import type { LoginResponse } from "./auth.api";
+import type { LoginResponse } from "./auth";
+import { requestWithClient } from "./core";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const LOGIN_PATH = "/login";
@@ -27,6 +27,7 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+export const publicApiClient = axios.create(apiClientConfig);
 const refreshClient = axios.create(apiClientConfig);
 
 let isRefreshing = false;
@@ -61,16 +62,17 @@ const processQueue = (error: unknown, token: string | null) => {
 };
 
 const refreshAccessToken = async (refreshToken: string) => {
-  const { data } = await refreshClient.post<ApiResponse<LoginResponse>>(
-    "/auth/refresh",
-    {
+  const result = await requestWithClient<LoginResponse>(refreshClient, {
+    url: "/auth/refresh",
+    method: "POST",
+    data: {
       refreshToken,
     },
-  );
+  });
 
-  storeTokens(data.data.accessToken, data.data.refreshToken);
-  storeAuthUser(data.data.user);
-  return data.data.accessToken;
+  storeTokens(result.accessToken, result.refreshToken);
+  storeAuthUser(result.user);
+  return result.accessToken;
 };
 
 export const apiClient = axios.create(apiClientConfig);

@@ -1,8 +1,8 @@
 import type { TriggerConfig, Workflow } from "@/entities/workflow";
 
-import type { ApiResponse, PageResponse, ValidationWarning } from "../types";
+import type { PageResponse, ValidationWarning } from "../../types";
 
-import { apiClient } from "./client";
+export type WorkflowListResponse = PageResponse<WorkflowResponse>;
 
 export interface CreateWorkflowRequest {
   name: string;
@@ -119,60 +119,3 @@ export interface NodeSelectionResult {
   followUp?: ChoiceFollowUp | null;
   branchConfig?: ChoiceBranchConfig | null;
 }
-
-export const workflowApi = {
-  getList: (page = 0, size = 20) =>
-    apiClient.get<ApiResponse<PageResponse<WorkflowResponse>>>("/workflows", {
-      params: { page, size },
-    }),
-
-  getById: (id: string) =>
-    apiClient.get<ApiResponse<WorkflowResponse>>(`/workflows/${id}`),
-
-  create: (body: CreateWorkflowRequest) =>
-    apiClient.post<ApiResponse<WorkflowResponse>>("/workflows", body),
-
-  update: (id: string, body: UpdateWorkflowRequest) =>
-    apiClient.put<ApiResponse<WorkflowResponse>>(`/workflows/${id}`, body),
-
-  delete: (id: string) =>
-    apiClient.delete<ApiResponse<void>>(`/workflows/${id}`),
-
-  addNode: (workflowId: string, body: NodeAddRequest) =>
-    apiClient.post<ApiResponse<WorkflowResponse>>(
-      `/workflows/${workflowId}/nodes`,
-      body,
-    ),
-
-  updateNode: (workflowId: string, nodeId: string, body: NodeUpdateRequest) =>
-    apiClient.put<ApiResponse<WorkflowResponse>>(
-      `/workflows/${workflowId}/nodes/${nodeId}`,
-      body,
-    ),
-
-  deleteNode: (workflowId: string, nodeId: string) =>
-    apiClient.delete<ApiResponse<WorkflowResponse>>(
-      `/workflows/${workflowId}/nodes/${nodeId}`,
-    ),
-
-  getChoices: (workflowId: string, prevNodeId: string) =>
-    apiClient.get<ApiResponse<ChoiceResponse>>(
-      `/workflows/${workflowId}/choices/${prevNodeId}`,
-    ),
-
-  selectChoice: (
-    workflowId: string,
-    prevNodeId: string,
-    body: NodeChoiceSelectRequest,
-  ) =>
-    apiClient.post<ApiResponse<NodeSelectionResult>>(
-      `/workflows/${workflowId}/choices/${prevNodeId}/select`,
-      body,
-    ),
-
-  share: (workflowId: string, body: ShareRequest) =>
-    apiClient.post<ApiResponse<void>>(`/workflows/${workflowId}/share`, body),
-
-  generate: (body: WorkflowGenerateRequest) =>
-    apiClient.post<ApiResponse<WorkflowResponse>>("/workflows/generate", body),
-};

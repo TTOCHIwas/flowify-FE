@@ -1,4 +1,4 @@
-import type { AuthUser } from "../api/auth.api";
+import type { AuthUser } from "../api";
 
 const ACCESS_TOKEN_KEY = "accessToken";
 const REFRESH_TOKEN_KEY = "refreshToken";
