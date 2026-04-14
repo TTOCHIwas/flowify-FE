@@ -161,7 +161,7 @@ import { addEdge } from "@xyflow/react";
 import type { Edge, Node } from "@xyflow/react";
 ```
 
-`import type` 스타일이 다시 생기지 않도록 ESLint에서 `@typescript-eslint/consistent-type-imports`를 강제한다.
+`import type` 스타일이 다시 생기지 않도록 ESLint에서 `@typescript-eslint/consistent-type-imports`를 강제하고, 별도 `import type` 선언은 추가 규칙으로 금지한다.
 
 #### Type Import 일괄 정리 절차
 
