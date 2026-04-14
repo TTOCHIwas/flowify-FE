@@ -1,26 +1,19 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { workflowApi } from "@/entities/workflow";
 import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
+
+import { workflowApi } from "../api";
 
 import { syncWorkflowCache } from "./workflow-cache-utils";
 
-type ToggleWorkflowActiveVariables = {
-  workflowId: string;
-  active: boolean;
-};
-
-export const useToggleWorkflowActiveMutation = (
+export const useCreateWorkflowMutation = (
   options?: MutationPolicyOptions<
-    Awaited<ReturnType<typeof workflowApi.update>>,
-    ToggleWorkflowActiveVariables
+    Awaited<ReturnType<typeof workflowApi.create>>,
+    Parameters<typeof workflowApi.create>[0]
   >,
 ) =>
   useMutation({
-    mutationFn: ({ workflowId, active }: ToggleWorkflowActiveVariables) =>
-      workflowApi.update(workflowId, {
-        active,
-      }),
+    mutationFn: workflowApi.create,
     retry: options?.retry,
     meta: toMutationMeta(options),
     onSuccess: async (workflow, variables, onMutateResult, context) => {

@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { workflowApi } from "@/entities/workflow";
-import { workflowKeys } from "../../constants";
 import { type QueryPolicyOptions, toQueryMeta } from "@/shared/api";
+
+import { workflowApi } from "../api";
+
+import { workflowKeys } from "./query-keys";
 
 export const useWorkflowQuery = (
   id: string | undefined,

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-import { useInfiniteWorkflowListQuery } from "@/shared";
+import { useInfiniteWorkflowListQuery } from "@/entities/workflow";
 
 import { WORKFLOW_LIST_PAGE_SIZE } from "./constants";
 import { type WorkflowFilterKey } from "./types";

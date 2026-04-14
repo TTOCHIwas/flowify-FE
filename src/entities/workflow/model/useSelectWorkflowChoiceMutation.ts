@@ -1,9 +1,11 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { workflowApi } from "@/entities/workflow";
-import { workflowKeys } from "../../constants";
-import { queryClient } from "../../libs";
 import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
+import { queryClient } from "@/shared/libs";
+
+import { workflowApi } from "../api";
+
+import { workflowKeys } from "./query-keys";
 
 type SelectWorkflowChoiceVariables = {
   workflowId: string;

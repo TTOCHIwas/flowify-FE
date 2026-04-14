@@ -1,24 +1,19 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { workflowApi } from "@/entities/workflow";
 import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
+
+import { workflowApi } from "../api";
 
 import { syncWorkflowCache } from "./workflow-cache-utils";
 
-type DeleteWorkflowNodeVariables = {
-  workflowId: string;
-  nodeId: string;
-};
-
-export const useDeleteWorkflowNodeMutation = (
+export const useGenerateWorkflowMutation = (
   options?: MutationPolicyOptions<
-    Awaited<ReturnType<typeof workflowApi.deleteNode>>,
-    DeleteWorkflowNodeVariables
+    Awaited<ReturnType<typeof workflowApi.generate>>,
+    Parameters<typeof workflowApi.generate>[0]
   >,
 ) =>
   useMutation({
-    mutationFn: ({ workflowId, nodeId }: DeleteWorkflowNodeVariables) =>
-      workflowApi.deleteNode(workflowId, nodeId),
+    mutationFn: workflowApi.generate,
     retry: options?.retry,
     meta: toMutationMeta(options),
     onSuccess: async (workflow, variables, onMutateResult, context) => {

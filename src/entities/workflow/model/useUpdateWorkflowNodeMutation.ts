@@ -1,18 +1,26 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { workflowApi } from "@/entities/workflow";
 import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
+
+import { type NodeUpdateRequest, workflowApi } from "../api";
 
 import { syncWorkflowCache } from "./workflow-cache-utils";
 
-export const useCreateWorkflowMutation = (
+type UpdateWorkflowNodeVariables = {
+  workflowId: string;
+  nodeId: string;
+  body: NodeUpdateRequest;
+};
+
+export const useUpdateWorkflowNodeMutation = (
   options?: MutationPolicyOptions<
-    Awaited<ReturnType<typeof workflowApi.create>>,
-    Parameters<typeof workflowApi.create>[0]
+    Awaited<ReturnType<typeof workflowApi.updateNode>>,
+    UpdateWorkflowNodeVariables
   >,
 ) =>
   useMutation({
-    mutationFn: workflowApi.create,
+    mutationFn: ({ workflowId, nodeId, body }: UpdateWorkflowNodeVariables) =>
+      workflowApi.updateNode(workflowId, nodeId, body),
     retry: options?.retry,
     meta: toMutationMeta(options),
     onSuccess: async (workflow, variables, onMutateResult, context) => {

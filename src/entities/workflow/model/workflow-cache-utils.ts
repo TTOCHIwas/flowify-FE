@@ -1,12 +1,16 @@
-import type { WorkflowSummary } from "@/entities/workflow";
-import { getWorkflowStatus } from "@/entities/workflow";
+import { executionKeys } from "@/shared/constants";
+import { queryClient } from "@/shared/libs";
+import type {
+  WorkflowSummary,
+} from "./types";
+import { getWorkflowStatus } from "./types";
 import type {
   ChoiceResponse,
   NodeSelectionResult,
   WorkflowResponse,
-} from "@/entities/workflow";
-import { executionKeys, workflowKeys } from "../../constants";
-import { queryClient } from "../../libs";
+} from "../api";
+
+import { workflowKeys } from "./query-keys";
 
 export const cacheWorkflowDetail = (workflow: WorkflowResponse) => {
   queryClient.setQueryData(workflowKeys.detail(workflow.id), workflow);

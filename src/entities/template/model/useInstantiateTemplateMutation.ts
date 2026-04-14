@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 
 import type { WorkflowResponse } from "@/entities/workflow";
 import { type MutationPolicyOptions, toMutationMeta } from "@/shared/api";
-import { syncWorkflowCache } from "@/shared";
+import { syncWorkflowCache } from "@/entities/workflow";
 
 import { templateApi } from "../api";
 

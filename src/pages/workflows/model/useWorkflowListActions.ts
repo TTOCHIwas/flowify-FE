@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 
-import { useCreateWorkflowShortcut } from "@/features/create-workflow";
 import {
   type WorkflowResponse,
-  buildPath,
   useToggleWorkflowActiveMutation,
-} from "@/shared";
+} from "@/entities/workflow";
+import { useCreateWorkflowShortcut } from "@/features/create-workflow";
+import { buildPath } from "@/shared";
 
 export const useWorkflowListActions = () => {
   const navigate = useNavigate();

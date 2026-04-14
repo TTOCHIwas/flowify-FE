@@ -5,12 +5,12 @@ import { useNavigate, useParams } from "react-router";
 import { Box, Button, Icon, Spinner, Text } from "@chakra-ui/react";
 import { ReactFlowProvider } from "@xyflow/react";
 
+import { useWorkflowQuery } from "@/entities/workflow";
 import { ServiceSelectionPanel } from "@/features/add-node";
 import {
   EDITOR_CANVAS_AREA_ID,
   ROUTE_PATHS,
   hydrateStore,
-  useWorkflowQuery,
   useWorkflowStore,
 } from "@/shared";
 import { Canvas, EditorToolbar, InputPanel, OutputPanel } from "@/widgets";
