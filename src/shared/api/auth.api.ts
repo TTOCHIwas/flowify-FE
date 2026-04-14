@@ -1,4 +1,5 @@
 import type { ApiResponse } from "../types";
+import { processApiResponse } from "../utils";
 
 import { apiClient } from "./client";
 
@@ -17,15 +18,31 @@ export interface LoginResponse {
 }
 
 export const authApi = {
-  exchange: (exchangeCode: string) =>
-    apiClient.post<ApiResponse<LoginResponse>>("/auth/exchange", {
-      exchangeCode,
-    }),
+  exchange: async (exchangeCode: string) => {
+    const { data } = await apiClient.post<ApiResponse<LoginResponse>>(
+      "/auth/exchange",
+      {
+        exchangeCode,
+      },
+    );
 
-  refresh: (refreshToken: string) =>
-    apiClient.post<ApiResponse<LoginResponse>>("/auth/refresh", {
-      refreshToken,
-    }),
+    return processApiResponse(data);
+  },
 
-  logout: () => apiClient.post<ApiResponse<void>>("/auth/logout"),
+  refresh: async (refreshToken: string) => {
+    const { data } = await apiClient.post<ApiResponse<LoginResponse>>(
+      "/auth/refresh",
+      {
+        refreshToken,
+      },
+    );
+
+    return processApiResponse(data);
+  },
+
+  logout: async () => {
+    const { data } = await apiClient.post<ApiResponse<void>>("/auth/logout");
+
+    return processApiResponse(data);
+  },
 };

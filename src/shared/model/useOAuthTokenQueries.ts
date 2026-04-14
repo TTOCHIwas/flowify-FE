@@ -7,27 +7,18 @@ import { queryClient } from "../libs";
 export const useOAuthTokensQuery = () =>
   useQuery({
     queryKey: QUERY_KEYS.oauthTokens,
-    queryFn: async () => {
-      const response = await oauthApi.getTokens();
-      return response.data.data;
-    },
+    queryFn: () => oauthApi.getTokens(),
     throwOnError: false,
   });
 
 export const useConnectOAuthTokenMutation = () =>
   useMutation({
-    mutationFn: async (service: string) => {
-      const response = await oauthApi.connect(service);
-      return response.data.data;
-    },
+    mutationFn: (service: string) => oauthApi.connect(service),
   });
 
 export const useDisconnectOAuthTokenMutation = () =>
   useMutation({
-    mutationFn: async (service: string) => {
-      const response = await oauthApi.disconnect(service);
-      return response.data.data;
-    },
+    mutationFn: (service: string) => oauthApi.disconnect(service),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.oauthTokens,

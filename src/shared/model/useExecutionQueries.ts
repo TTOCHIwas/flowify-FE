@@ -52,13 +52,12 @@ export const useWorkflowExecutionsQuery = (
     queryKey: workflowId
       ? QUERY_KEYS.executions(workflowId)
       : ["workflows", "executions", "unknown"],
-    queryFn: async () => {
+    queryFn: () => {
       if (!workflowId) {
         throw new Error("workflow id is required");
       }
 
-      const response = await executionApi.getList(workflowId);
-      return response.data.data;
+      return executionApi.getList(workflowId);
     },
     enabled: Boolean(workflowId) && enabled,
     refetchInterval: (query) => {
@@ -86,13 +85,12 @@ export const useWorkflowExecutionQuery = (
       workflowId && executionId
         ? QUERY_KEYS.execution(workflowId, executionId)
         : ["workflows", "execution", "unknown"],
-    queryFn: async () => {
+    queryFn: () => {
       if (!workflowId || !executionId) {
         throw new Error("workflow id and execution id are required");
       }
 
-      const response = await executionApi.getById(workflowId, executionId);
-      return response.data.data;
+      return executionApi.getById(workflowId, executionId);
     },
     enabled: Boolean(workflowId && executionId) && enabled,
     refetchInterval: (query) => {
@@ -108,10 +106,7 @@ export const useWorkflowExecutionQuery = (
 
 export const useExecuteWorkflowMutation = () =>
   useMutation({
-    mutationFn: async (workflowId: string) => {
-      const response = await executionApi.execute(workflowId);
-      return response.data.data;
-    },
+    mutationFn: (workflowId: string) => executionApi.execute(workflowId),
     onSuccess: async (_, workflowId) => {
       await queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.executions(workflowId),
@@ -121,7 +116,7 @@ export const useExecuteWorkflowMutation = () =>
 
 export const useRollbackExecutionMutation = () =>
   useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       workflowId,
       executionId,
       nodeId,
@@ -129,14 +124,7 @@ export const useRollbackExecutionMutation = () =>
       workflowId: string;
       executionId: string;
       nodeId?: string;
-    }) => {
-      const response = await executionApi.rollback(
-        workflowId,
-        executionId,
-        nodeId,
-      );
-      return response.data.data;
-    },
+    }) => executionApi.rollback(workflowId, executionId, nodeId),
     onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.executions(variables.workflowId),

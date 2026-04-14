@@ -1,4 +1,5 @@
 import type { ApiResponse } from "../types";
+import { processApiResponse } from "../utils";
 
 import { apiClient } from "./client";
 
@@ -14,14 +15,26 @@ export interface OAuthConnectResponse {
 }
 
 export const oauthApi = {
-  getTokens: () =>
-    apiClient.get<ApiResponse<OAuthTokenSummary[]>>("/oauth-tokens"),
+  getTokens: async () => {
+    const { data } =
+      await apiClient.get<ApiResponse<OAuthTokenSummary[]>>("/oauth-tokens");
 
-  connect: (service: string) =>
-    apiClient.post<ApiResponse<OAuthConnectResponse>>(
+    return processApiResponse(data);
+  },
+
+  connect: async (service: string) => {
+    const { data } = await apiClient.post<ApiResponse<OAuthConnectResponse>>(
       `/oauth-tokens/${service}/connect`,
-    ),
+    );
 
-  disconnect: (service: string) =>
-    apiClient.delete<ApiResponse<void>>(`/oauth-tokens/${service}`),
+    return processApiResponse(data);
+  },
+
+  disconnect: async (service: string) => {
+    const { data } = await apiClient.delete<ApiResponse<void>>(
+      `/oauth-tokens/${service}`,
+    );
+
+    return processApiResponse(data);
+  },
 };

@@ -9,6 +9,7 @@ import {
   storeTokens,
 } from "../libs/auth-session";
 import type { ApiResponse } from "../types";
+import { processApiResponse } from "../utils";
 
 import type { LoginResponse } from "./auth.api";
 
@@ -68,9 +69,11 @@ const refreshAccessToken = async (refreshToken: string) => {
     },
   );
 
-  storeTokens(data.data.accessToken, data.data.refreshToken);
-  storeAuthUser(data.data.user);
-  return data.data.accessToken;
+  const result = processApiResponse(data);
+
+  storeTokens(result.accessToken, result.refreshToken);
+  storeAuthUser(result.user);
+  return result.accessToken;
 };
 
 export const apiClient = axios.create(apiClientConfig);

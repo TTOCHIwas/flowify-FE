@@ -21,7 +21,7 @@ export const useCreateWorkflowShortcut = () => {
     setIsPending(true);
 
     try {
-      const response = await workflowApi.create({
+      const workflow = await workflowApi.create({
         name: "새 워크플로우",
         description: "",
         nodes: [],
@@ -30,7 +30,7 @@ export const useCreateWorkflowShortcut = () => {
       });
 
       await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.workflows });
-      navigate(buildPath.workflowEditor(response.data.data.id));
+      navigate(buildPath.workflowEditor(workflow.id));
     } catch {
       navigate(ROUTE_PATHS.WORKFLOWS);
     } finally {

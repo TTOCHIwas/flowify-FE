@@ -19,10 +19,7 @@ import type { PageResponse } from "../types";
 export const useWorkflowListQuery = (page = 0, size = 20, enabled = true) =>
   useQuery({
     queryKey: [...QUERY_KEYS.workflows, { page, size }] as const,
-    queryFn: async () => {
-      const response = await workflowApi.getList(page, size);
-      return response.data.data;
-    },
+    queryFn: () => workflowApi.getList(page, size),
     enabled,
     throwOnError: false,
   });
@@ -30,10 +27,7 @@ export const useWorkflowListQuery = (page = 0, size = 20, enabled = true) =>
 export const useInfiniteWorkflowListQuery = (size = 20, enabled = true) =>
   useInfiniteQuery({
     queryKey: [...QUERY_KEYS.workflows, "infinite", { size }] as const,
-    queryFn: async ({ pageParam }) => {
-      const response = await workflowApi.getList(pageParam, size);
-      return response.data.data;
-    },
+    queryFn: ({ pageParam }) => workflowApi.getList(pageParam, size),
     enabled,
     initialPageParam: 0,
     getNextPageParam: (lastPage: PageResponse<WorkflowResponse>) => {
@@ -46,13 +40,12 @@ export const useInfiniteWorkflowListQuery = (size = 20, enabled = true) =>
 export const useWorkflowQuery = (id: string | undefined) =>
   useQuery({
     queryKey: id ? QUERY_KEYS.workflow(id) : ["workflows", "unknown"],
-    queryFn: async () => {
+    queryFn: () => {
       if (!id) {
         throw new Error("workflow id is required");
       }
 
-      const response = await workflowApi.getById(id);
-      return response.data.data;
+      return workflowApi.getById(id);
     },
     enabled: Boolean(id),
     throwOnError: false,
@@ -60,20 +53,13 @@ export const useWorkflowQuery = (id: string | undefined) =>
 
 export const useSaveWorkflowMutation = () =>
   useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       workflowId,
       store,
     }: {
       workflowId: string;
       store: WorkflowAdapterStoreState;
-    }) => {
-      const response = await workflowApi.update(
-        workflowId,
-        toWorkflowUpdateRequest(store),
-      );
-
-      return response.data.data;
-    },
+    }) => workflowApi.update(workflowId, toWorkflowUpdateRequest(store)),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.workflows,
@@ -83,19 +69,16 @@ export const useSaveWorkflowMutation = () =>
 
 export const useToggleWorkflowActiveMutation = () =>
   useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       workflowId,
       active,
     }: {
       workflowId: string;
       active: boolean;
-    }) => {
-      const response = await workflowApi.update(workflowId, {
+    }) =>
+      workflowApi.update(workflowId, {
         active,
-      });
-
-      return response.data.data;
-    },
+      }),
     onSuccess: syncWorkflowCache,
   });
 
@@ -108,31 +91,25 @@ const syncWorkflowCache = async (workflow: WorkflowResponse) => {
 
 export const useAddWorkflowNodeMutation = () =>
   useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       workflowId,
       body,
     }: {
       workflowId: string;
       body: NodeAddRequest;
-    }) => {
-      const response = await workflowApi.addNode(workflowId, body);
-      return response.data.data;
-    },
+    }) => workflowApi.addNode(workflowId, body),
     onSuccess: syncWorkflowCache,
   });
 
 export const useDeleteWorkflowNodeMutation = () =>
   useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       workflowId,
       nodeId,
     }: {
       workflowId: string;
       nodeId: string;
-    }) => {
-      const response = await workflowApi.deleteNode(workflowId, nodeId);
-      return response.data.data;
-    },
+    }) => workflowApi.deleteNode(workflowId, nodeId),
     onSuccess: syncWorkflowCache,
   });
 
@@ -146,13 +123,12 @@ export const useWorkflowChoicesQuery = (
       workflowId && prevNodeId
         ? QUERY_KEYS.workflowChoices(workflowId, prevNodeId)
         : ["workflows", "choices", "idle"],
-    queryFn: async () => {
+    queryFn: () => {
       if (!workflowId || !prevNodeId) {
         throw new Error("workflow id and prev node id are required");
       }
 
-      const response = await workflowApi.getChoices(workflowId, prevNodeId);
-      return response.data.data;
+      return workflowApi.getChoices(workflowId, prevNodeId);
     },
     enabled: Boolean(workflowId && prevNodeId) && enabled,
     throwOnError: false,
@@ -160,7 +136,7 @@ export const useWorkflowChoicesQuery = (
 
 export const useSelectWorkflowChoiceMutation = () =>
   useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       workflowId,
       prevNodeId,
       selectedOptionId,
@@ -172,15 +148,12 @@ export const useSelectWorkflowChoiceMutation = () =>
       selectedOptionId: string;
       dataType: string;
       context?: Record<string, unknown>;
-    }) => {
-      const response = await workflowApi.selectChoice(workflowId, prevNodeId, {
+    }) =>
+      workflowApi.selectChoice(workflowId, prevNodeId, {
         selectedOptionId,
         dataType,
         context,
-      });
-
-      return response.data.data;
-    },
+      }),
   });
 
 export const toWorkflowSummary = (

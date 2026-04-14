@@ -1,6 +1,7 @@
 import type { TriggerConfig, Workflow } from "@/entities/workflow";
 
 import type { ApiResponse, PageResponse, ValidationWarning } from "../types";
+import { processApiResponse } from "../utils";
 
 import { apiClient } from "./client";
 
@@ -121,58 +122,116 @@ export interface NodeSelectionResult {
 }
 
 export const workflowApi = {
-  getList: (page = 0, size = 20) =>
-    apiClient.get<ApiResponse<PageResponse<WorkflowResponse>>>("/workflows", {
+  getList: async (page = 0, size = 20) => {
+    const { data } = await apiClient.get<
+      ApiResponse<PageResponse<WorkflowResponse>>
+    >("/workflows", {
       params: { page, size },
-    }),
+    });
 
-  getById: (id: string) =>
-    apiClient.get<ApiResponse<WorkflowResponse>>(`/workflows/${id}`),
+    return processApiResponse(data);
+  },
 
-  create: (body: CreateWorkflowRequest) =>
-    apiClient.post<ApiResponse<WorkflowResponse>>("/workflows", body),
+  getById: async (id: string) => {
+    const { data } = await apiClient.get<ApiResponse<WorkflowResponse>>(
+      `/workflows/${id}`,
+    );
 
-  update: (id: string, body: UpdateWorkflowRequest) =>
-    apiClient.put<ApiResponse<WorkflowResponse>>(`/workflows/${id}`, body),
+    return processApiResponse(data);
+  },
 
-  delete: (id: string) =>
-    apiClient.delete<ApiResponse<void>>(`/workflows/${id}`),
+  create: async (body: CreateWorkflowRequest) => {
+    const { data } = await apiClient.post<ApiResponse<WorkflowResponse>>(
+      "/workflows",
+      body,
+    );
 
-  addNode: (workflowId: string, body: NodeAddRequest) =>
-    apiClient.post<ApiResponse<WorkflowResponse>>(
+    return processApiResponse(data);
+  },
+
+  update: async (id: string, body: UpdateWorkflowRequest) => {
+    const { data } = await apiClient.put<ApiResponse<WorkflowResponse>>(
+      `/workflows/${id}`,
+      body,
+    );
+
+    return processApiResponse(data);
+  },
+
+  delete: async (id: string) => {
+    const { data } = await apiClient.delete<ApiResponse<void>>(
+      `/workflows/${id}`,
+    );
+
+    return processApiResponse(data);
+  },
+
+  addNode: async (workflowId: string, body: NodeAddRequest) => {
+    const { data } = await apiClient.post<ApiResponse<WorkflowResponse>>(
       `/workflows/${workflowId}/nodes`,
       body,
-    ),
+    );
 
-  updateNode: (workflowId: string, nodeId: string, body: NodeUpdateRequest) =>
-    apiClient.put<ApiResponse<WorkflowResponse>>(
+    return processApiResponse(data);
+  },
+
+  updateNode: async (
+    workflowId: string,
+    nodeId: string,
+    body: NodeUpdateRequest,
+  ) => {
+    const { data } = await apiClient.put<ApiResponse<WorkflowResponse>>(
       `/workflows/${workflowId}/nodes/${nodeId}`,
       body,
-    ),
+    );
 
-  deleteNode: (workflowId: string, nodeId: string) =>
-    apiClient.delete<ApiResponse<WorkflowResponse>>(
+    return processApiResponse(data);
+  },
+
+  deleteNode: async (workflowId: string, nodeId: string) => {
+    const { data } = await apiClient.delete<ApiResponse<WorkflowResponse>>(
       `/workflows/${workflowId}/nodes/${nodeId}`,
-    ),
+    );
 
-  getChoices: (workflowId: string, prevNodeId: string) =>
-    apiClient.get<ApiResponse<ChoiceResponse>>(
+    return processApiResponse(data);
+  },
+
+  getChoices: async (workflowId: string, prevNodeId: string) => {
+    const { data } = await apiClient.get<ApiResponse<ChoiceResponse>>(
       `/workflows/${workflowId}/choices/${prevNodeId}`,
-    ),
+    );
 
-  selectChoice: (
+    return processApiResponse(data);
+  },
+
+  selectChoice: async (
     workflowId: string,
     prevNodeId: string,
     body: NodeChoiceSelectRequest,
-  ) =>
-    apiClient.post<ApiResponse<NodeSelectionResult>>(
+  ) => {
+    const { data } = await apiClient.post<ApiResponse<NodeSelectionResult>>(
       `/workflows/${workflowId}/choices/${prevNodeId}/select`,
       body,
-    ),
+    );
 
-  share: (workflowId: string, body: ShareRequest) =>
-    apiClient.post<ApiResponse<void>>(`/workflows/${workflowId}/share`, body),
+    return processApiResponse(data);
+  },
 
-  generate: (body: WorkflowGenerateRequest) =>
-    apiClient.post<ApiResponse<WorkflowResponse>>("/workflows/generate", body),
+  share: async (workflowId: string, body: ShareRequest) => {
+    const { data } = await apiClient.post<ApiResponse<void>>(
+      `/workflows/${workflowId}/share`,
+      body,
+    );
+
+    return processApiResponse(data);
+  },
+
+  generate: async (body: WorkflowGenerateRequest) => {
+    const { data } = await apiClient.post<ApiResponse<WorkflowResponse>>(
+      "/workflows/generate",
+      body,
+    );
+
+    return processApiResponse(data);
+  },
 };

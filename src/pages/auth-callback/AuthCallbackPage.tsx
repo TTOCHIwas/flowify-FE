@@ -75,12 +75,12 @@ export default function AuthCallbackPage() {
       }
 
       try {
-        const response = await authApi.exchange(exchangeCode);
+        const result = await authApi.exchange(exchangeCode);
         if (!isMounted) {
           return;
         }
 
-        const { accessToken, refreshToken, user } = response.data.data;
+        const { accessToken, refreshToken, user } = result;
         storeTokens(accessToken, refreshToken);
         storeAuthUser(user);
         navigate(ROUTE_PATHS.WORKFLOWS, { replace: true });

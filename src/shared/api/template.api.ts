@@ -1,4 +1,5 @@
 import type { ApiResponse } from "../types";
+import { processApiResponse } from "../utils";
 
 import { apiClient } from "./client";
 import type { WorkflowResponse } from "./workflow.api";
@@ -30,19 +31,39 @@ export interface CreateTemplateRequest {
 }
 
 export const templateApi = {
-  getList: (category?: string) =>
-    apiClient.get<ApiResponse<TemplateSummary[]>>("/templates", {
-      params: category ? { category } : undefined,
-    }),
+  getList: async (category?: string) => {
+    const { data } = await apiClient.get<ApiResponse<TemplateSummary[]>>(
+      "/templates",
+      {
+        params: category ? { category } : undefined,
+      },
+    );
 
-  getById: (id: string) =>
-    apiClient.get<ApiResponse<TemplateDetail>>(`/templates/${id}`),
+    return processApiResponse(data);
+  },
 
-  instantiate: (id: string) =>
-    apiClient.post<ApiResponse<WorkflowResponse>>(
+  getById: async (id: string) => {
+    const { data } = await apiClient.get<ApiResponse<TemplateDetail>>(
+      `/templates/${id}`,
+    );
+
+    return processApiResponse(data);
+  },
+
+  instantiate: async (id: string) => {
+    const { data } = await apiClient.post<ApiResponse<WorkflowResponse>>(
       `/templates/${id}/instantiate`,
-    ),
+    );
 
-  create: (body: CreateTemplateRequest) =>
-    apiClient.post<ApiResponse<TemplateDetail>>("/templates", body),
+    return processApiResponse(data);
+  },
+
+  create: async (body: CreateTemplateRequest) => {
+    const { data } = await apiClient.post<ApiResponse<TemplateDetail>>(
+      "/templates",
+      body,
+    );
+
+    return processApiResponse(data);
+  },
 };

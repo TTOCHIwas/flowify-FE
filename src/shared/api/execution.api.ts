@@ -1,4 +1,5 @@
 import type { ApiResponse } from "../types";
+import { processApiResponse } from "../utils";
 
 import { apiClient } from "./client";
 
@@ -41,25 +42,39 @@ export interface ExecutionDetail {
 }
 
 export const executionApi = {
-  execute: (workflowId: string) =>
-    apiClient.post<ApiResponse<string>>(`/workflows/${workflowId}/execute`),
+  execute: async (workflowId: string) => {
+    const { data } = await apiClient.post<ApiResponse<string>>(
+      `/workflows/${workflowId}/execute`,
+    );
 
-  getList: (workflowId: string) =>
-    apiClient.get<ApiResponse<ExecutionDetail[]>>(
+    return processApiResponse(data);
+  },
+
+  getList: async (workflowId: string) => {
+    const { data } = await apiClient.get<ApiResponse<ExecutionDetail[]>>(
       `/workflows/${workflowId}/executions`,
-    ),
+    );
 
-  getById: (workflowId: string, execId: string) =>
-    apiClient.get<ApiResponse<ExecutionDetail>>(
+    return processApiResponse(data);
+  },
+
+  getById: async (workflowId: string, execId: string) => {
+    const { data } = await apiClient.get<ApiResponse<ExecutionDetail>>(
       `/workflows/${workflowId}/executions/${execId}`,
-    ),
+    );
 
-  rollback: (workflowId: string, execId: string, nodeId?: string) =>
-    apiClient.post<ApiResponse<void>>(
+    return processApiResponse(data);
+  },
+
+  rollback: async (workflowId: string, execId: string, nodeId?: string) => {
+    const { data } = await apiClient.post<ApiResponse<void>>(
       `/workflows/${workflowId}/executions/${execId}/rollback`,
       undefined,
       {
         params: nodeId ? { nodeId } : undefined,
       },
-    ),
+    );
+
+    return processApiResponse(data);
+  },
 };
