@@ -30,12 +30,12 @@ import type {
   MappingDataTypeKey,
 } from "@/features/choice-panel";
 import { PanelRenderer } from "@/features/configure-node";
+import { useWorkflowStore } from "@/features/workflow-editor";
 import {
   findAddedNodeId,
   toFlowNode,
   toNodeAddRequest,
   useDualPanelLayout,
-  useWorkflowStore,
 } from "@/shared";
 
 import {

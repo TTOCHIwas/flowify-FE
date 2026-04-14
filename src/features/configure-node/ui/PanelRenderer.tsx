@@ -3,7 +3,7 @@ import type { ErrorInfo, ReactNode } from "react";
 
 import { Box, Text } from "@chakra-ui/react";
 
-import { useWorkflowStore } from "@/shared";
+import { useWorkflowStore } from "@/features/workflow-editor";
 
 import { NODE_PANEL_REGISTRY } from "../model";
 

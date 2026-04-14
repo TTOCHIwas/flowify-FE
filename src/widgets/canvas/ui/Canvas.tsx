@@ -42,7 +42,8 @@ import {
 import type { NodeType } from "@/entities/node";
 import { isDataTypeCompatible } from "@/entities/node";
 import { useAddNode } from "@/features/add-node";
-import { getLeafNodeIds, useWorkflowStore } from "@/shared";
+import { useWorkflowStore } from "@/features/workflow-editor";
+import { getLeafNodeIds } from "@/shared";
 
 const NODE_GAP_X = 96;
 const DEFAULT_ROW_CENTER_Y = 320;

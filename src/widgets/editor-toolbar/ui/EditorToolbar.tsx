@@ -20,7 +20,7 @@ import {
   useSaveWorkflowMutation,
   useWorkflowExecutionsQuery,
 } from "@/entities";
-import { useWorkflowStore } from "@/shared";
+import { useWorkflowStore } from "@/features/workflow-editor";
 
 interface RunButtonConfig {
   colorPalette: string;

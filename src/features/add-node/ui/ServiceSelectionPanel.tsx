@@ -17,11 +17,11 @@ import {
   useDeleteWorkflowNodeMutation,
 } from "@/entities/workflow";
 import type { FlowNodeData, NodeMeta } from "@/entities/node";
+import { useWorkflowStore } from "@/features/workflow-editor";
 import {
   findAddedNodeId,
   toFlowNode,
   toNodeAddRequest,
-  useWorkflowStore,
 } from "@/shared";
 
 import { CATEGORY_SERVICE_MAP } from "../model/serviceMap";
