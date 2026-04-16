@@ -43,6 +43,7 @@ export const EditorRemoteBar = () => {
   const edges = useWorkflowStore((state) => state.edges);
   const startNodeId = useWorkflowStore((state) => state.startNodeId);
   const endNodeId = useWorkflowStore((state) => state.endNodeId);
+  const isDirty = useWorkflowStore((state) => state.isDirty);
   const setExecutionStatus = useWorkflowStore(
     (state) => state.setExecutionStatus,
   );
@@ -91,6 +92,15 @@ export const EditorRemoteBar = () => {
 
   const handleRun = async () => {
     if (!workflowId || !canRun) {
+      return;
+    }
+
+    if (isDirty) {
+      toaster.create({
+        title: "저장되지 않은 변경이 있습니다",
+        description: "실행 전에 워크플로우를 저장해주세요.",
+        type: "warning",
+      });
       return;
     }
 
