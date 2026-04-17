@@ -64,6 +64,7 @@ export const EditorRemoteBar = () => {
   );
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isAutoSavingBeforeRun, setIsAutoSavingBeforeRun] = useState(false);
 
   const latestExecution = getLatestExecution(executions);
   const latestExecutionStatus = latestExecution
@@ -80,6 +81,7 @@ export const EditorRemoteBar = () => {
     !isRunning &&
     !isSavePending &&
     !isDeletePending &&
+    !isAutoSavingBeforeRun &&
     !isRollbackPending;
   const canStop = Boolean(workflowId) && isRunning && Boolean(latestExecution);
   const canSave = Boolean(workflowId) && !isRunning && !isDeletePending;
@@ -90,18 +92,42 @@ export const EditorRemoteBar = () => {
     latestExecutionStatus === "failed" &&
     !isRunning;
 
+  const saveCurrentWorkflow = async () => {
+    if (!workflowId) {
+      return;
+    }
+
+    await saveWorkflow({
+      workflowId,
+      store: {
+        workflowName,
+        nodes,
+        edges,
+        startNodeId,
+        endNodeId,
+      },
+    });
+  };
+
   const handleRun = async () => {
     if (!workflowId || !canRun) {
       return;
     }
 
     if (isDirty) {
-      toaster.create({
-        title: "저장되지 않은 변경이 있습니다",
-        description: "실행 전에 워크플로우를 저장해주세요.",
-        type: "warning",
-      });
-      return;
+      try {
+        setIsAutoSavingBeforeRun(true);
+        await saveCurrentWorkflow();
+      } catch {
+        toaster.create({
+          title: "저장 실패",
+          description: "워크플로우 저장에 실패했습니다.",
+          type: "error",
+        });
+        return;
+      } finally {
+        setIsAutoSavingBeforeRun(false);
+      }
     }
 
     try {
@@ -116,7 +142,6 @@ export const EditorRemoteBar = () => {
       });
     }
   };
-
   const handleStop = async () => {
     if (!workflowId || !latestExecution) {
       return;
@@ -142,16 +167,7 @@ export const EditorRemoteBar = () => {
     }
 
     try {
-      await saveWorkflow({
-        workflowId,
-        store: {
-          workflowName,
-          nodes,
-          edges,
-          startNodeId,
-          endNodeId,
-        },
-      });
+      await saveCurrentWorkflow();
     } catch {
       toaster.create({
         title: "저장 실패",
@@ -160,7 +176,6 @@ export const EditorRemoteBar = () => {
       });
     }
   };
-
   const handleRollback = async () => {
     if (!workflowId || !latestExecution || !canRollback) {
       return;
@@ -221,7 +236,10 @@ export const EditorRemoteBar = () => {
       zIndex={4}
     >
       <Box position="relative" pointerEvents="auto">
-        <ExecutionStatusBadge status={latestExecutionStatus} />
+        <ExecutionStatusBadge
+          status={latestExecutionStatus}
+          autoSaveLabel={isAutoSavingBeforeRun ? "저장 중..." : null}
+        />
 
         <Box
           display="flex"
