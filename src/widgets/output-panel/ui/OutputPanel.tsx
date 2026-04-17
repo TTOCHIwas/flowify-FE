@@ -18,7 +18,6 @@ import {
   findAddedNodeId,
   toBackendDataType,
   toBackendNodeType,
-  toFlowNode,
   toNodeAddRequest,
   useAddWorkflowNodeMutation,
   useDeleteWorkflowNodeMutation,
@@ -40,7 +39,7 @@ import {
   type MappingDataTypeKey,
 } from "@/features/choice-panel";
 import { PanelRenderer } from "@/features/configure-node";
-import { useWorkflowStore } from "@/features/workflow-editor";
+import { hydrateStore, useWorkflowStore } from "@/features/workflow-editor";
 import { useDualPanelLayout } from "@/shared";
 
 import {
@@ -225,11 +224,9 @@ export const OutputPanel = () => {
   const workflowId = useWorkflowStore((state) => state.workflowId);
   const startNodeId = useWorkflowStore((state) => state.startNodeId);
   const endNodeId = useWorkflowStore((state) => state.endNodeId);
-  const onConnect = useWorkflowStore((state) => state.onConnect);
-  const addNode = useWorkflowStore((state) => state.addNode);
-  const replaceNode = useWorkflowStore((state) => state.replaceNode);
-  const removeNode = useWorkflowStore((state) => state.removeNode);
-  const batchServerSync = useWorkflowStore((state) => state.batchServerSync);
+  const syncWorkflowGraph = useWorkflowStore(
+    (state) => state.syncWorkflowGraph,
+  );
   const openPanel = useWorkflowStore((state) => state.openPanel);
   const closePanel = useWorkflowStore((state) => state.closePanel);
   const { mutateAsync: addWorkflowNode, isPending: isAddNodePending } =
@@ -263,6 +260,9 @@ export const OutputPanel = () => {
   const [baseStagingSnapshot, setBaseStagingSnapshot] =
     useState<WizardNodeSnapshot | null>(null);
   const [actionNodeId, setActionNodeId] = useState<string | null>(null);
+  const [sessionOwnedLeafNodeIds, setSessionOwnedLeafNodeIds] = useState<
+    string[]
+  >([]);
   const [wizardError, setWizardError] = useState<string | null>(null);
 
   const resetWizardState = useCallback(() => {
@@ -277,6 +277,7 @@ export const OutputPanel = () => {
     setRootParentNodeId(null);
     setBaseStagingSnapshot(null);
     setActionNodeId(null);
+    setSessionOwnedLeafNodeIds([]);
     setWizardError(null);
   }, []);
 
@@ -434,6 +435,17 @@ export const OutputPanel = () => {
     [],
   );
 
+  const syncWorkflowFromResponse = useCallback(
+    (workflow: WorkflowResponse) => {
+      syncWorkflowGraph(hydrateStore(workflow), {
+        preserveActivePanelNodeId: true,
+        preserveActivePlaceholder: true,
+        preserveDirty: true,
+      });
+    },
+    [syncWorkflowGraph],
+  );
+
   const syncUpdatedNode = useCallback(
     (workflow: WorkflowResponse, nodeId: string) => {
       const nextNode = workflow.nodes.find((node) => node.id === nodeId);
@@ -441,13 +453,29 @@ export const OutputPanel = () => {
         throw new Error("node was not updated");
       }
 
-      batchServerSync(() => {
-        replaceNode(toFlowNode(nextNode));
-      });
-
+      syncWorkflowFromResponse(workflow);
       return nextNode.id;
     },
-    [batchServerSync, replaceNode],
+    [syncWorkflowFromResponse],
+  );
+
+  const canSafelyDeleteWizardLeaf = useCallback(
+    (nodeId: string) => {
+      if (!sessionOwnedLeafNodeIds.includes(nodeId)) {
+        return false;
+      }
+
+      if (nodeId === stagingNodeId) {
+        return false;
+      }
+
+      if (resolveNodeRole(nodeId) !== "middle") {
+        return false;
+      }
+
+      return !edges.some((edge) => edge.source === nodeId);
+    },
+    [edges, resolveNodeRole, sessionOwnedLeafNodeIds, stagingNodeId],
   );
 
   const updatePersistedNode = useCallback(
@@ -555,19 +583,10 @@ export const OutputPanel = () => {
         return null;
       }
 
-      batchServerSync(() => {
-        addNode(toFlowNode(addedNode));
-        onConnect({
-          source: sourceNodeId,
-          target: addedNodeId,
-          sourceHandle: null,
-          targetHandle: null,
-        });
-      });
-
+      syncWorkflowFromResponse(nextWorkflow);
       return addedNodeId;
     },
-    [addNode, addWorkflowNode, batchServerSync, onConnect, workflowId],
+    [addWorkflowNode, syncWorkflowFromResponse, workflowId],
   );
 
   const removeWorkflowNode = useCallback(
@@ -576,15 +595,13 @@ export const OutputPanel = () => {
         throw new Error("workflowId is required");
       }
 
-      await deleteWorkflowNode({
+      const nextWorkflow = await deleteWorkflowNode({
         workflowId,
         nodeId,
       });
-      batchServerSync(() => {
-        removeNode(nodeId);
-      });
+      syncWorkflowFromResponse(nextWorkflow);
     },
-    [batchServerSync, deleteWorkflowNode, removeNode, workflowId],
+    [deleteWorkflowNode, syncWorkflowFromResponse, workflowId],
   );
 
   useEffect(() => {
@@ -766,6 +783,11 @@ export const OutputPanel = () => {
           }
 
           setActionNodeId(createdActionNodeId);
+          setSessionOwnedLeafNodeIds((current) =>
+            current.includes(createdActionNodeId)
+              ? current
+              : [...current, createdActionNodeId],
+          );
           targetNodeId = createdActionNodeId;
         }
       } else {
@@ -806,7 +828,17 @@ export const OutputPanel = () => {
 
     try {
       if (actionNodeId && actionNode) {
+        if (!canSafelyDeleteWizardLeaf(actionNode.id)) {
+          setWizardError(
+            "이미 후속 연결이 생겨 이전 단계로 되돌릴 수 없습니다.",
+          );
+          return;
+        }
+
         await removeWorkflowNode(actionNode.id);
+        setSessionOwnedLeafNodeIds((current) =>
+          current.filter((nodeId) => nodeId !== actionNode.id),
+        );
       }
 
       await updatePersistedNode({
