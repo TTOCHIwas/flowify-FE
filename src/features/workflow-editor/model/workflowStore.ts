@@ -41,6 +41,7 @@ interface WorkflowEditorActions {
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
   addNode: (node: Node<FlowNodeData>) => void;
+  replaceNode: (node: Node<FlowNodeData>) => void;
   removeNode: (id: string) => void;
   updateNodeConfig: (
     id: string,
@@ -124,6 +125,23 @@ export const useWorkflowStore = create<
     addNode: (node) =>
       set((state) => {
         state.nodes.push(node);
+        if (!state._isSyncing) {
+          state.isDirty = true;
+        }
+      }),
+
+    replaceNode: (node) =>
+      set((state) => {
+        const index = state.nodes.findIndex(
+          (currentNode) => currentNode.id === node.id,
+        );
+
+        if (index === -1) {
+          state.nodes.push(node);
+        } else {
+          state.nodes[index] = node;
+        }
+
         if (!state._isSyncing) {
           state.isDirty = true;
         }
