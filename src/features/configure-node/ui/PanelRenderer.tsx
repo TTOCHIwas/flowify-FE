@@ -42,7 +42,7 @@ class PanelErrorBoundary extends Component<
   }
 }
 
-export const PanelRenderer = () => {
+export const PanelRenderer = ({ readOnly = false }: { readOnly?: boolean }) => {
   const activeNode = useWorkflowStore(
     (s) => s.nodes.find((node) => node.id === s.activePanelNodeId) ?? null,
   );
@@ -54,7 +54,11 @@ export const PanelRenderer = () => {
 
   return (
     <PanelErrorBoundary>
-      <PanelComponent nodeId={activeNode.id} data={activeNode.data} />
+      <PanelComponent
+        nodeId={activeNode.id}
+        data={activeNode.data}
+        readOnly={readOnly}
+      />
     </PanelErrorBoundary>
   );
 };

@@ -46,6 +46,15 @@ export const EditorRemoteBar = () => {
   const startNodeId = useWorkflowStore((state) => state.startNodeId);
   const endNodeId = useWorkflowStore((state) => state.endNodeId);
   const isDirty = useWorkflowStore((state) => state.isDirty);
+  const canEditNodes = useWorkflowStore(
+    (state) => state.editorCapabilities.canEditNodes,
+  );
+  const canSaveWorkflow = useWorkflowStore(
+    (state) => state.editorCapabilities.canSaveWorkflow,
+  );
+  const canRunWorkflow = useWorkflowStore(
+    (state) => state.editorCapabilities.canRunWorkflow,
+  );
 
   const { mutateAsync: saveWorkflow, isPending: isSavePending } =
     useSaveWorkflowMutation();
@@ -111,6 +120,7 @@ export const EditorRemoteBar = () => {
 
   const canRun =
     Boolean(workflowId) &&
+    canRunWorkflow &&
     effectiveRunPhase === "idle" &&
     !isRemoteExecutionInFlight &&
     !isSavePending &&
@@ -119,21 +129,25 @@ export const EditorRemoteBar = () => {
     !isRollbackPending;
   const canStop =
     Boolean(workflowId) &&
+    canRunWorkflow &&
     Boolean(activeExecution) &&
     !isStarting &&
     isRemoteExecutionInFlight;
   const canSave =
     Boolean(workflowId) &&
+    canSaveWorkflow &&
     effectiveRunPhase === "idle" &&
     !isRemoteExecutionInFlight &&
     !isDeletePending;
   const canDelete =
     Boolean(workflowId) &&
+    canEditNodes &&
     effectiveRunPhase === "idle" &&
     !isRemoteExecutionInFlight &&
     !isDeletePending;
   const canRollback =
     Boolean(workflowId) &&
+    canRunWorkflow &&
     Boolean(activeExecution) &&
     activeExecutionStatus === "failed" &&
     !isRunning;
@@ -303,7 +317,14 @@ export const EditorRemoteBar = () => {
           onPointerDown={(event) => event.stopPropagation()}
         >
           <Box display="flex" alignItems="center" flexShrink={0}>
-            <WorkflowNameField disabled={isRunning} />
+            <WorkflowNameField
+              disabled={isRunning || !canSaveWorkflow}
+              disabledReason={
+                canSaveWorkflow
+                  ? "실행 중에는 편집할 수 없습니다"
+                  : "공유된 워크플로우는 이름을 수정할 수 없습니다"
+              }
+            />
           </Box>
 
           <MiddleSlotButtons

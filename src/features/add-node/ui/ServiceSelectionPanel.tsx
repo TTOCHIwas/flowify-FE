@@ -312,6 +312,9 @@ const AuthPrompt = ({
 export const ServiceSelectionPanel = () => {
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const canEditNodes = useWorkflowStore(
+    (state) => state.editorCapabilities.canEditNodes,
+  );
   const activePlaceholder = useWorkflowStore(
     (state) => state.activePlaceholder,
   );
@@ -468,7 +471,7 @@ export const ServiceSelectionPanel = () => {
     ],
   );
 
-  if (!activePlaceholder) return null;
+  if (!canEditNodes || !activePlaceholder) return null;
 
   const isStartOrEndPlaceholder =
     activePlaceholder.id === "placeholder-start" ||

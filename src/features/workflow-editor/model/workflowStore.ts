@@ -20,6 +20,13 @@ type PlaceholderInfo = {
   position: { x: number; y: number };
 };
 
+export interface WorkflowEditorCapabilities {
+  canViewEditor: boolean;
+  canEditNodes: boolean;
+  canSaveWorkflow: boolean;
+  canRunWorkflow: boolean;
+}
+
 interface WorkflowEditorState {
   nodes: Node<FlowNodeData>[];
   edges: Edge[];
@@ -30,6 +37,7 @@ interface WorkflowEditorState {
   activePlaceholder: PlaceholderInfo | null;
   workflowId: string;
   workflowName: string;
+  editorCapabilities: WorkflowEditorCapabilities;
   isDirty: boolean;
   _isSyncing: boolean;
 }
@@ -58,6 +66,7 @@ interface WorkflowEditorActions {
     },
   ) => void;
   setWorkflowName: (name: string) => void;
+  setEditorCapabilities: (capabilities: WorkflowEditorCapabilities) => void;
   setStartNodeId: (id: string | null) => void;
   setEndNodeId: (id: string | null) => void;
   setCreationMethod: (method: "manual" | null) => void;
@@ -77,6 +86,12 @@ const initialState: WorkflowEditorState = {
   activePlaceholder: null,
   workflowId: "",
   workflowName: "",
+  editorCapabilities: {
+    canViewEditor: true,
+    canEditNodes: true,
+    canSaveWorkflow: true,
+    canRunWorkflow: true,
+  },
   isDirty: false,
   _isSyncing: false,
 };
@@ -297,6 +312,11 @@ export const useWorkflowStore = create<
       set((state) => {
         state.workflowName = name;
         state.isDirty = true;
+      }),
+
+    setEditorCapabilities: (capabilities) =>
+      set((state) => {
+        state.editorCapabilities = capabilities;
       }),
 
     batchServerSync: (fn) => {

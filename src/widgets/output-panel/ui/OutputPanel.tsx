@@ -224,6 +224,9 @@ export const OutputPanel = () => {
   const workflowId = useWorkflowStore((state) => state.workflowId);
   const startNodeId = useWorkflowStore((state) => state.startNodeId);
   const endNodeId = useWorkflowStore((state) => state.endNodeId);
+  const canEditNodes = useWorkflowStore(
+    (state) => state.editorCapabilities.canEditNodes,
+  );
   const syncWorkflowGraph = useWorkflowStore(
     (state) => state.syncWorkflowGraph,
   );
@@ -961,7 +964,24 @@ export const OutputPanel = () => {
           </Box>
 
           <Box flex={1} overflow="auto" p={3}>
-            {wizardStep === "processing-method" && initialChoiceResponse ? (
+            {!canEditNodes ? (
+              <Box
+                p={4}
+                borderRadius="xl"
+                bg="gray.50"
+                border="1px solid"
+                borderColor="gray.200"
+              >
+                <Text fontSize="sm" color="text.secondary">
+                  공유된 워크플로우는 읽기 전용입니다. 이 노드 설정은 소유자만
+                  변경할 수 있습니다.
+                </Text>
+              </Box>
+            ) : null}
+
+            {canEditNodes &&
+            wizardStep === "processing-method" &&
+            initialChoiceResponse ? (
               <ProcessingMethodStep
                 question={initialChoiceResponse.question}
                 options={initialChoiceResponse.options}
@@ -969,7 +989,9 @@ export const OutputPanel = () => {
               />
             ) : null}
 
-            {wizardStep === "action" && activeActionChoiceResponse ? (
+            {canEditNodes &&
+            wizardStep === "action" &&
+            activeActionChoiceResponse ? (
               <ActionStep
                 question={activeActionChoiceResponse.question}
                 actions={activeActionChoiceResponse.options}
@@ -982,7 +1004,7 @@ export const OutputPanel = () => {
               />
             ) : null}
 
-            {wizardStep === "follow-up" ? (
+            {canEditNodes && wizardStep === "follow-up" ? (
               <FollowUpStep
                 followUp={selectedFollowUp}
                 branchConfig={selectedBranchConfig}
@@ -1065,7 +1087,7 @@ export const OutputPanel = () => {
           </Box>
 
           <Box flex={1} overflow="auto">
-            <PanelRenderer />
+            <PanelRenderer readOnly={!canEditNodes} />
           </Box>
         </>
       )}

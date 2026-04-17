@@ -179,6 +179,9 @@ export const Canvas = () => {
   const setCreationMethod = useWorkflowStore(
     (state) => state.setCreationMethod,
   );
+  const canEditNodes = useWorkflowStore(
+    (state) => state.editorCapabilities.canEditNodes,
+  );
   const activePlaceholder = useWorkflowStore(
     (state) => state.activePlaceholder,
   );
@@ -237,12 +240,13 @@ export const Canvas = () => {
   );
   const nodeEditorContextValue = useMemo(
     () => ({
+      canEditNodes,
       startNodeId,
       endNodeId,
       onOpenPanel: openPanel,
       onRemoveNode: handleRemoveNode,
     }),
-    [endNodeId, handleRemoveNode, openPanel, startNodeId],
+    [canEditNodes, endNodeId, handleRemoveNode, openPanel, startNodeId],
   );
 
   const handleNodesChange = useCallback(
@@ -261,6 +265,13 @@ export const Canvas = () => {
 
   const handleNodeClick = useCallback(
     async (_event: MouseEvent, node: Node) => {
+      if (
+        !canEditNodes &&
+        (node.type === "creation-method" || node.type === "placeholder")
+      ) {
+        return;
+      }
+
       if (node.type === "creation-method") {
         return;
       }
@@ -370,6 +381,7 @@ export const Canvas = () => {
     },
     [
       addWorkflowNode,
+      canEditNodes,
       closePanel,
       isAddNodePending,
       isDeleteNodePending,
@@ -393,11 +405,19 @@ export const Canvas = () => {
   }, [activePanelNodeId, activePlaceholder, closePanel, setActivePlaceholder]);
 
   const handleSelectManual = useCallback(() => {
+    if (!canEditNodes) {
+      return;
+    }
+
     setCreationMethod("manual");
-  }, [setCreationMethod]);
+  }, [canEditNodes, setCreationMethod]);
 
   const handleConnect = useCallback(
     (connection: Parameters<typeof onConnect>[0]) => {
+      if (!canEditNodes) {
+        return;
+      }
+
       const sourceNode = nodes.find((node) => node.id === connection.source);
       const targetNode = nodes.find((node) => node.id === connection.target);
 
@@ -414,7 +434,7 @@ export const Canvas = () => {
 
       onConnect(connection);
     },
-    [nodes, onConnect],
+    [canEditNodes, nodes, onConnect],
   );
 
   useEffect(() => {
@@ -770,7 +790,8 @@ export const Canvas = () => {
         onPaneClick={handlePaneClick}
         panOnDrag={!isCanvasLocked}
         panOnScroll={false}
-        nodesDraggable={!isCanvasLocked}
+        nodesConnectable={canEditNodes}
+        nodesDraggable={!isCanvasLocked && canEditNodes}
         zoomOnScroll={!isCanvasLocked}
         zoomOnPinch={!isCanvasLocked}
         zoomOnDoubleClick={!isCanvasLocked}

@@ -36,7 +36,7 @@ const getSummaryContent = (
 };
 
 export const BaseNode = ({ id, data, children }: BaseNodeProps) => {
-  const { endNodeId, onOpenPanel, onRemoveNode, startNodeId } =
+  const { canEditNodes, endNodeId, onOpenPanel, onRemoveNode, startNodeId } =
     useNodeEditorContext();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -111,7 +111,7 @@ export const BaseNode = ({ id, data, children }: BaseNodeProps) => {
         </Box>
       ) : null}
 
-      {isHovered ? (
+      {isHovered && canEditNodes ? (
         <IconButton
           aria-label="노드 삭제"
           size="xs"

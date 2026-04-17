@@ -6,10 +6,12 @@ import { useWorkflowStore } from "@/features/workflow-editor";
 
 type WorkflowNameFieldProps = {
   disabled?: boolean;
+  disabledReason?: string;
 };
 
 export const WorkflowNameField = ({
   disabled = false,
+  disabledReason = "실행 중에는 편집할 수 없습니다",
 }: WorkflowNameFieldProps) => {
   const workflowName = useWorkflowStore((state) => state.workflowName);
   const setWorkflowName = useWorkflowStore((state) => state.setWorkflowName);
@@ -89,7 +91,7 @@ export const WorkflowNameField = ({
       cursor={disabled ? "default" : "pointer"}
       opacity={disabled ? 0.6 : 1}
       onClick={handleStartEdit}
-      title={disabled ? "실행 중에는 편집할 수 없습니다" : "클릭하여 이름 수정"}
+      title={disabled ? disabledReason : "클릭하여 이름 수정"}
     >
       {displayName}
     </Text>
