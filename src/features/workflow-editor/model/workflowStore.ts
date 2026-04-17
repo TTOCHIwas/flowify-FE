@@ -10,7 +10,6 @@ import { current } from "immer";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
-import { type ExecutionStatus } from "@/entities/execution";
 import { type FlowNodeData } from "@/entities/node";
 import { collectDescendantIds } from "@/shared/libs/graph";
 
@@ -31,7 +30,6 @@ interface WorkflowEditorState {
   activePlaceholder: PlaceholderInfo | null;
   workflowId: string;
   workflowName: string;
-  executionStatus: ExecutionStatus;
   isDirty: boolean;
   _isSyncing: boolean;
 }
@@ -60,7 +58,6 @@ interface WorkflowEditorActions {
     },
   ) => void;
   setWorkflowName: (name: string) => void;
-  setExecutionStatus: (status: ExecutionStatus) => void;
   setStartNodeId: (id: string | null) => void;
   setEndNodeId: (id: string | null) => void;
   setCreationMethod: (method: "manual" | null) => void;
@@ -80,7 +77,6 @@ const initialState: WorkflowEditorState = {
   activePlaceholder: null,
   workflowId: "",
   workflowName: "",
-  executionStatus: "idle",
   isDirty: false,
   _isSyncing: false,
 };
@@ -301,11 +297,6 @@ export const useWorkflowStore = create<
       set((state) => {
         state.workflowName = name;
         state.isDirty = true;
-      }),
-
-    setExecutionStatus: (status) =>
-      set((state) => {
-        state.executionStatus = status;
       }),
 
     batchServerSync: (fn) => {

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 
 import { Box } from "@chakra-ui/react";
 
 import {
+  executionPollInterval,
   getLatestExecution,
+  isExecutionInFlight,
   normalizeExecutionStatus,
   useExecuteWorkflowMutation,
   useRollbackExecutionMutation,
@@ -44,9 +46,6 @@ export const EditorRemoteBar = () => {
   const startNodeId = useWorkflowStore((state) => state.startNodeId);
   const endNodeId = useWorkflowStore((state) => state.endNodeId);
   const isDirty = useWorkflowStore((state) => state.isDirty);
-  const setExecutionStatus = useWorkflowStore(
-    (state) => state.setExecutionStatus,
-  );
 
   const { mutateAsync: saveWorkflow, isPending: isSavePending } =
     useSaveWorkflowMutation();
@@ -58,38 +57,85 @@ export const EditorRemoteBar = () => {
     useRollbackExecutionMutation();
   const { mutateAsync: deleteWorkflow, isPending: isDeletePending } =
     useDeleteWorkflowMutation();
-  const { data: executions } = useWorkflowExecutionsQuery(
-    workflowId || undefined,
-    Boolean(workflowId),
+
+  const [runPhase, setRunPhase] = useState<"idle" | "auto-saving" | "starting">(
+    "idle",
   );
-
+  const [trackedExecutionId, setTrackedExecutionId] = useState<string | null>(
+    null,
+  );
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isAutoSavingBeforeRun, setIsAutoSavingBeforeRun] = useState(false);
+  const { data: executions, refetch: refetchExecutions } =
+    useWorkflowExecutionsQuery(workflowId || undefined, {
+      enabled: Boolean(workflowId),
+      refetchInterval: (query) => {
+        if (trackedExecutionId) {
+          return executionPollInterval;
+        }
 
-  const latestExecution = getLatestExecution(executions);
-  const latestExecutionStatus = latestExecution
-    ? normalizeExecutionStatus(latestExecution.state)
+        const currentExecutions = query.state.data;
+        if (!currentExecutions?.length) {
+          return false;
+        }
+
+        return currentExecutions.some((execution) =>
+          isExecutionInFlight(execution.state),
+        )
+          ? executionPollInterval
+          : false;
+      },
+    });
+
+  const trackedExecution = trackedExecutionId
+    ? (executions?.find((execution) => execution.id === trackedExecutionId) ??
+      null)
+    : null;
+  const activeExecution = trackedExecution ?? getLatestExecution(executions);
+  const activeExecutionStatus = activeExecution
+    ? normalizeExecutionStatus(activeExecution.state)
     : "idle";
-  const isRunning = latestExecutionStatus === "running";
-
-  useEffect(() => {
-    setExecutionStatus(latestExecutionStatus);
-  }, [latestExecutionStatus, setExecutionStatus]);
+  const effectiveRunPhase =
+    runPhase === "starting" && trackedExecution ? "idle" : runPhase;
+  const isRemoteExecutionInFlight =
+    activeExecutionStatus === "pending" || activeExecutionStatus === "running";
+  const isStarting = effectiveRunPhase === "starting";
+  const isRunning = isStarting || isRemoteExecutionInFlight;
+  const executionStatusLabel =
+    effectiveRunPhase === "auto-saving"
+      ? "저장 중..."
+      : effectiveRunPhase === "starting"
+        ? "실행 시작 중..."
+        : isRemoteExecutionInFlight
+          ? "실행 중..."
+          : null;
 
   const canRun =
     Boolean(workflowId) &&
-    !isRunning &&
+    effectiveRunPhase === "idle" &&
+    !isRemoteExecutionInFlight &&
     !isSavePending &&
     !isDeletePending &&
-    !isAutoSavingBeforeRun &&
+    !isExecutePending &&
     !isRollbackPending;
-  const canStop = Boolean(workflowId) && isRunning && Boolean(latestExecution);
-  const canSave = Boolean(workflowId) && !isRunning && !isDeletePending;
-  const canDelete = Boolean(workflowId) && !isRunning && !isDeletePending;
+  const canStop =
+    Boolean(workflowId) &&
+    Boolean(activeExecution) &&
+    !isStarting &&
+    isRemoteExecutionInFlight;
+  const canSave =
+    Boolean(workflowId) &&
+    effectiveRunPhase === "idle" &&
+    !isRemoteExecutionInFlight &&
+    !isDeletePending;
+  const canDelete =
+    Boolean(workflowId) &&
+    effectiveRunPhase === "idle" &&
+    !isRemoteExecutionInFlight &&
+    !isDeletePending;
   const canRollback =
     Boolean(workflowId) &&
-    Boolean(latestExecution) &&
-    latestExecutionStatus === "failed" &&
+    Boolean(activeExecution) &&
+    activeExecutionStatus === "failed" &&
     !isRunning;
 
   const saveCurrentWorkflow = async () => {
@@ -115,26 +161,28 @@ export const EditorRemoteBar = () => {
     }
 
     if (isDirty) {
+      setRunPhase("auto-saving");
       try {
-        setIsAutoSavingBeforeRun(true);
         await saveCurrentWorkflow();
       } catch {
+        setRunPhase("idle");
         toaster.create({
           title: "저장 실패",
           description: "워크플로우 저장에 실패했습니다.",
           type: "error",
         });
         return;
-      } finally {
-        setIsAutoSavingBeforeRun(false);
       }
     }
 
     try {
-      setExecutionStatus("running");
-      await executeWorkflow(workflowId);
+      setTrackedExecutionId(null);
+      setRunPhase("starting");
+      const executionId = await executeWorkflow(workflowId);
+      setTrackedExecutionId(executionId);
+      void refetchExecutions();
     } catch {
-      setExecutionStatus("failed");
+      setRunPhase("idle");
       toaster.create({
         title: "실행 실패",
         description: "워크플로우 실행을 시작하지 못했습니다.",
@@ -143,14 +191,14 @@ export const EditorRemoteBar = () => {
     }
   };
   const handleStop = async () => {
-    if (!workflowId || !latestExecution) {
+    if (!workflowId || !activeExecution) {
       return;
     }
 
     try {
       await stopExecution({
         workflowId,
-        executionId: latestExecution.id,
+        executionId: activeExecution.id,
       });
     } catch {
       toaster.create({
@@ -177,14 +225,14 @@ export const EditorRemoteBar = () => {
     }
   };
   const handleRollback = async () => {
-    if (!workflowId || !latestExecution || !canRollback) {
+    if (!workflowId || !activeExecution || !canRollback) {
       return;
     }
 
     try {
       await rollbackExecution({
         workflowId,
-        executionId: latestExecution.id,
+        executionId: activeExecution.id,
       });
     } catch {
       toaster.create({
@@ -236,10 +284,7 @@ export const EditorRemoteBar = () => {
       zIndex={4}
     >
       <Box position="relative" pointerEvents="auto">
-        <ExecutionStatusBadge
-          status={latestExecutionStatus}
-          autoSaveLabel={isAutoSavingBeforeRun ? "저장 중..." : null}
-        />
+        <ExecutionStatusBadge label={executionStatusLabel} />
 
         <Box
           display="flex"
@@ -272,7 +317,7 @@ export const EditorRemoteBar = () => {
 
           <RunStopSplitButton
             isRunning={isRunning}
-            isRunPending={isExecutePending}
+            isRunPending={isExecutePending || isStarting}
             isStopPending={isStopPending}
             isSavePending={isSavePending}
             canRun={canRun}

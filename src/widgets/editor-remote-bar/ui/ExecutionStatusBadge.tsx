@@ -1,10 +1,7 @@
 import { Box, Text } from "@chakra-ui/react";
 
-import { type ExecutionStatus } from "@/entities";
-
 type ExecutionStatusBadgeProps = {
-  autoSaveLabel?: string | null;
-  status: ExecutionStatus;
+  label?: string | null;
 };
 
 /**
@@ -16,11 +13,8 @@ type ExecutionStatusBadgeProps = {
  * - 성공/실패 피드백은 버튼 상태 복귀 + 롤백 활성화로 암시적으로 표현.
  */
 export const ExecutionStatusBadge = ({
-  status,
-  autoSaveLabel = null,
+  label = null,
 }: ExecutionStatusBadgeProps) => {
-  const label = autoSaveLabel ?? (status === "running" ? "실행 중..." : null);
-
   if (!label) {
     return null;
   }
