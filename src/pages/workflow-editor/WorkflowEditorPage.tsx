@@ -8,7 +8,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { useWorkflowQuery } from "@/entities/workflow";
 import { ServiceSelectionPanel } from "@/features/add-node";
 import { hydrateStore, useWorkflowStore } from "@/features/workflow-editor";
-import { EDITOR_CANVAS_AREA_ID, ROUTE_PATHS } from "@/shared";
+import { EDITOR_CANVAS_AREA_ID, ROUTE_PATHS, getAuthUser } from "@/shared";
 import { Canvas, EditorRemoteBar, InputPanel, OutputPanel } from "@/widgets";
 
 const EditorLoadingView = () => (
@@ -56,6 +56,12 @@ const WorkflowEditorInner = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const hydrateWorkflow = useWorkflowStore((state) => state.hydrateWorkflow);
+  const setEditorCapabilities = useWorkflowStore(
+    (state) => state.setEditorCapabilities,
+  );
+  const canEditNodes = useWorkflowStore(
+    (state) => state.editorCapabilities.canEditNodes,
+  );
   const resetEditor = useWorkflowStore((state) => state.resetEditor);
   const { data: workflow, isLoading, isError } = useWorkflowQuery(id);
 
@@ -72,6 +78,22 @@ const WorkflowEditorInner = () => {
 
     hydrateWorkflow(hydrateStore(workflow));
   }, [hydrateWorkflow, workflow]);
+
+  useEffect(() => {
+    if (!workflow) {
+      return;
+    }
+
+    const authUser = getAuthUser();
+    const isOwner = workflow.userId === authUser?.id;
+
+    setEditorCapabilities({
+      canViewEditor: true,
+      canEditNodes: isOwner,
+      canSaveWorkflow: isOwner,
+      canRunWorkflow: isOwner,
+    });
+  }, [setEditorCapabilities, workflow]);
 
   useEffect(() => {
     return () => {
@@ -94,6 +116,25 @@ const WorkflowEditorInner = () => {
       overflow="hidden"
       height="100%"
     >
+      {!canEditNodes ? (
+        <Box
+          position="absolute"
+          top="24px"
+          left="50%"
+          transform="translateX(-50%)"
+          zIndex={6}
+          px={4}
+          py={2}
+          borderRadius="999px"
+          bg="#272727"
+          color="#efefef"
+          boxShadow="0 4px 12px rgba(0, 0, 0, 0.18)"
+        >
+          <Text fontSize="sm" fontWeight="medium">
+            공유된 워크플로우입니다. 편집은 소유자만 가능합니다.
+          </Text>
+        </Box>
+      ) : null}
       <Canvas />
       <EditorRemoteBar />
       <ServiceSelectionPanel />

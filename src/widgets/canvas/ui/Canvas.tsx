@@ -43,11 +43,11 @@ import { type NodeType } from "@/entities/node";
 import { isDataTypeCompatible } from "@/entities/node";
 import {
   findAddedNodeId,
-  toFlowNode,
   toNodeAddRequest,
   useAddWorkflowNodeMutation,
+  useDeleteWorkflowNodeMutation,
 } from "@/entities/workflow";
-import { useWorkflowStore } from "@/features/workflow-editor";
+import { hydrateStore, useWorkflowStore } from "@/features/workflow-editor";
 import { getLeafNodeIds } from "@/shared";
 import { toaster } from "@/shared/utils/toaster/toaster";
 
@@ -179,6 +179,9 @@ export const Canvas = () => {
   const setCreationMethod = useWorkflowStore(
     (state) => state.setCreationMethod,
   );
+  const canEditNodes = useWorkflowStore(
+    (state) => state.editorCapabilities.canEditNodes,
+  );
   const activePlaceholder = useWorkflowStore(
     (state) => state.activePlaceholder,
   );
@@ -189,21 +192,61 @@ export const Canvas = () => {
   const setActivePlaceholder = useWorkflowStore(
     (state) => state.setActivePlaceholder,
   );
-  const addNode = useWorkflowStore((state) => state.addNode);
-  const removeNode = useWorkflowStore((state) => state.removeNode);
+  const syncWorkflowGraph = useWorkflowStore(
+    (state) => state.syncWorkflowGraph,
+  );
   const openPanel = useWorkflowStore((state) => state.openPanel);
   const closePanel = useWorkflowStore((state) => state.closePanel);
-  const batchServerSync = useWorkflowStore((state) => state.batchServerSync);
   const { mutateAsync: addWorkflowNode, isPending: isAddNodePending } =
     useAddWorkflowNodeMutation();
+  const { mutateAsync: deleteWorkflowNode, isPending: isDeleteNodePending } =
+    useDeleteWorkflowNodeMutation();
+  const syncWorkflowFromResponse = useCallback(
+    (workflow: Parameters<typeof hydrateStore>[0]) => {
+      syncWorkflowGraph(hydrateStore(workflow), {
+        preserveActivePanelNodeId: true,
+        preserveActivePlaceholder: true,
+        preserveDirty: true,
+      });
+    },
+    [syncWorkflowGraph],
+  );
+  const handleRemoveNode = useCallback(
+    async (nodeId: string) => {
+      if (!workflowId) {
+        toaster.create({
+          title: "워크플로우 정보를 불러오지 못했습니다",
+          description: "페이지를 새로고침해주세요.",
+          type: "error",
+        });
+        return;
+      }
+
+      try {
+        const nextWorkflow = await deleteWorkflowNode({
+          workflowId,
+          nodeId,
+        });
+        syncWorkflowFromResponse(nextWorkflow);
+      } catch {
+        toaster.create({
+          title: "노드 삭제 실패",
+          description: "노드를 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.",
+          type: "error",
+        });
+      }
+    },
+    [deleteWorkflowNode, syncWorkflowFromResponse, workflowId],
+  );
   const nodeEditorContextValue = useMemo(
     () => ({
+      canEditNodes,
       startNodeId,
       endNodeId,
       onOpenPanel: openPanel,
-      onRemoveNode: removeNode,
+      onRemoveNode: handleRemoveNode,
     }),
-    [endNodeId, openPanel, removeNode, startNodeId],
+    [canEditNodes, endNodeId, handleRemoveNode, openPanel, startNodeId],
   );
 
   const handleNodesChange = useCallback(
@@ -222,6 +265,13 @@ export const Canvas = () => {
 
   const handleNodeClick = useCallback(
     async (_event: MouseEvent, node: Node) => {
+      if (
+        !canEditNodes &&
+        (node.type === "creation-method" || node.type === "placeholder")
+      ) {
+        return;
+      }
+
       if (node.type === "creation-method") {
         return;
       }
@@ -238,7 +288,7 @@ export const Canvas = () => {
           node.id === "placeholder-start" || node.id === "placeholder-end";
         const isMiddlePlaceholder = !isStartOrEndPlaceholder;
 
-        if (isMiddlePlaceholder && isAddNodePending) {
+        if (isMiddlePlaceholder && (isAddNodePending || isDeleteNodePending)) {
           return;
         }
 
@@ -301,16 +351,7 @@ export const Canvas = () => {
               return;
             }
 
-            batchServerSync(() => {
-              addNode(toFlowNode(addedNode));
-              onConnect({
-                source: sourceNodeId,
-                target: addedNodeId,
-                sourceHandle: null,
-                targetHandle: null,
-              });
-            });
-
+            syncWorkflowFromResponse(nextWorkflow);
             setActivePlaceholder(null);
             openPanel(addedNodeId);
           } catch {
@@ -339,16 +380,16 @@ export const Canvas = () => {
       }
     },
     [
-      addNode,
       addWorkflowNode,
-      batchServerSync,
+      canEditNodes,
       closePanel,
       isAddNodePending,
+      isDeleteNodePending,
       nodes,
-      onConnect,
       openPanel,
       setActivePlaceholder,
       setCenter,
+      syncWorkflowFromResponse,
       workflowId,
     ],
   );
@@ -364,11 +405,19 @@ export const Canvas = () => {
   }, [activePanelNodeId, activePlaceholder, closePanel, setActivePlaceholder]);
 
   const handleSelectManual = useCallback(() => {
+    if (!canEditNodes) {
+      return;
+    }
+
     setCreationMethod("manual");
-  }, [setCreationMethod]);
+  }, [canEditNodes, setCreationMethod]);
 
   const handleConnect = useCallback(
     (connection: Parameters<typeof onConnect>[0]) => {
+      if (!canEditNodes) {
+        return;
+      }
+
       const sourceNode = nodes.find((node) => node.id === connection.source);
       const targetNode = nodes.find((node) => node.id === connection.target);
 
@@ -385,7 +434,7 @@ export const Canvas = () => {
 
       onConnect(connection);
     },
-    [nodes, onConnect],
+    [canEditNodes, nodes, onConnect],
   );
 
   useEffect(() => {
@@ -741,7 +790,8 @@ export const Canvas = () => {
         onPaneClick={handlePaneClick}
         panOnDrag={!isCanvasLocked}
         panOnScroll={false}
-        nodesDraggable={!isCanvasLocked}
+        nodesConnectable={canEditNodes}
+        nodesDraggable={!isCanvasLocked && canEditNodes}
         zoomOnScroll={!isCanvasLocked}
         zoomOnPinch={!isCanvasLocked}
         zoomOnDoubleClick={!isCanvasLocked}

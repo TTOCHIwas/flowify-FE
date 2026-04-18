@@ -19,7 +19,11 @@ const COMMUNICATION_SERVICE_OPTIONS = [
   label: string;
 }>;
 
-export const CommunicationPanel = ({ nodeId, data }: NodePanelProps) => {
+export const CommunicationPanel = ({
+  nodeId,
+  data,
+  readOnly = false,
+}: NodePanelProps) => {
   const startNodeId = useWorkflowStore((s) => s.startNodeId);
   const endNodeId = useWorkflowStore((s) => s.endNodeId);
   const updateNodeConfig = useWorkflowStore((s) => s.updateNodeConfig);
@@ -57,6 +61,7 @@ export const CommunicationPanel = ({ nodeId, data }: NodePanelProps) => {
                 key={option.value}
                 size="sm"
                 variant={selected ? "solid" : "outline"}
+                disabled={readOnly}
                 onClick={() => handleServiceChange(option.value)}
               >
                 {option.label}
@@ -75,7 +80,9 @@ export const CommunicationPanel = ({ nodeId, data }: NodePanelProps) => {
         </Text>
       ) : (
         <Text fontSize="xs" color="text.secondary">
-          Choose one service to mark this node as configured.
+          {readOnly
+            ? "읽기 전용 워크플로우에서는 서비스 설정을 변경할 수 없습니다."
+            : "Choose one service to mark this node as configured."}
         </Text>
       )}
     </NodePanelShell>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 
 import { useCreateWorkflowMutation } from "@/entities/workflow";
 import { ROUTE_PATHS, buildPath } from "@/shared";
+import { toaster } from "@/shared/utils/toaster/toaster";
 
 export const useCreateWorkflowShortcut = () => {
   const navigate = useNavigate();
@@ -27,6 +28,11 @@ export const useCreateWorkflowShortcut = () => {
 
       navigate(buildPath.workflowEditor(workflow.id));
     } catch {
+      toaster.create({
+        title: "워크플로우 생성에 실패했습니다.",
+        description: "잠시 후 다시 시도해주세요.",
+        type: "error",
+      });
       navigate(ROUTE_PATHS.WORKFLOWS);
     } finally {
       setIsPending(false);

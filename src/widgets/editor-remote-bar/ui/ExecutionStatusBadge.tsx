@@ -1,9 +1,7 @@
 import { Box, Text } from "@chakra-ui/react";
 
-import { type ExecutionStatus } from "@/entities";
-
 type ExecutionStatusBadgeProps = {
-  status: ExecutionStatus;
+  label?: string | null;
 };
 
 /**
@@ -14,8 +12,10 @@ type ExecutionStatusBadgeProps = {
  * - 그 외 상태(idle/success/failed)에서는 렌더 자체를 하지 않는다.
  * - 성공/실패 피드백은 버튼 상태 복귀 + 롤백 활성화로 암시적으로 표현.
  */
-export const ExecutionStatusBadge = ({ status }: ExecutionStatusBadgeProps) => {
-  if (status !== "running") {
+export const ExecutionStatusBadge = ({
+  label = null,
+}: ExecutionStatusBadgeProps) => {
+  if (!label) {
     return null;
   }
 
@@ -40,7 +40,7 @@ export const ExecutionStatusBadge = ({ status }: ExecutionStatusBadgeProps) => {
         fontWeight="normal"
         fontSize="12px"
       >
-        실행 중…
+        {label}
       </Text>
     </Box>
   );

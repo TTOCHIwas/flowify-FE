@@ -5,6 +5,7 @@ import { type FlowNodeData, type NodeType } from "@/entities/node";
 export interface NodePanelProps {
   nodeId: string;
   data: FlowNodeData;
+  readOnly?: boolean;
 }
 
 export type NodePanelComponent = ComponentType<NodePanelProps>;

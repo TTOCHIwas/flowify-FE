@@ -10,9 +10,7 @@ import { current } from "immer";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
-import { type ExecutionStatus } from "@/entities/execution";
 import { type FlowNodeData } from "@/entities/node";
-import { collectDescendantIds } from "@/shared/libs/graph";
 
 import { type WorkflowHydratedState } from "./workflow-editor-adapter";
 
@@ -20,6 +18,13 @@ type PlaceholderInfo = {
   id: string;
   position: { x: number; y: number };
 };
+
+export interface WorkflowEditorCapabilities {
+  canViewEditor: boolean;
+  canEditNodes: boolean;
+  canSaveWorkflow: boolean;
+  canRunWorkflow: boolean;
+}
 
 interface WorkflowEditorState {
   nodes: Node<FlowNodeData>[];
@@ -31,7 +36,7 @@ interface WorkflowEditorState {
   activePlaceholder: PlaceholderInfo | null;
   workflowId: string;
   workflowName: string;
-  executionStatus: ExecutionStatus;
+  editorCapabilities: WorkflowEditorCapabilities;
   isDirty: boolean;
   _isSyncing: boolean;
 }
@@ -40,8 +45,6 @@ interface WorkflowEditorActions {
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
-  addNode: (node: Node<FlowNodeData>) => void;
-  removeNode: (id: string) => void;
   updateNodeConfig: (
     id: string,
     config: Partial<FlowNodeData["config"]>,
@@ -50,13 +53,20 @@ interface WorkflowEditorActions {
   closePanel: () => void;
   setWorkflowMeta: (id: string, name: string) => void;
   hydrateWorkflow: (payload: WorkflowHydratedState) => void;
+  syncWorkflowGraph: (
+    payload: WorkflowHydratedState,
+    options?: {
+      preserveActivePanelNodeId?: boolean;
+      preserveActivePlaceholder?: boolean;
+      preserveDirty?: boolean;
+    },
+  ) => void;
   setWorkflowName: (name: string) => void;
-  setExecutionStatus: (status: ExecutionStatus) => void;
+  setEditorCapabilities: (capabilities: WorkflowEditorCapabilities) => void;
   setStartNodeId: (id: string | null) => void;
   setEndNodeId: (id: string | null) => void;
   setCreationMethod: (method: "manual" | null) => void;
   setActivePlaceholder: (placeholder: PlaceholderInfo | null) => void;
-  batchServerSync: (fn: () => void) => void;
   markClean: () => void;
   resetEditor: () => void;
 }
@@ -71,10 +81,21 @@ const initialState: WorkflowEditorState = {
   activePlaceholder: null,
   workflowId: "",
   workflowName: "",
-  executionStatus: "idle",
+  editorCapabilities: {
+    canViewEditor: true,
+    canEditNodes: true,
+    canSaveWorkflow: true,
+    canRunWorkflow: true,
+  },
   isDirty: false,
   _isSyncing: false,
 };
+
+const hasNode = (
+  nodes: Node<FlowNodeData>[],
+  nodeId: string | null,
+): nodeId is string =>
+  Boolean(nodeId && nodes.some((node) => node.id === nodeId));
 
 export const useWorkflowStore = create<
   WorkflowEditorState & WorkflowEditorActions
@@ -116,47 +137,6 @@ export const useWorkflowStore = create<
     onConnect: (connection) =>
       set((state) => {
         state.edges = addEdge(connection, current(state.edges));
-        if (!state._isSyncing) {
-          state.isDirty = true;
-        }
-      }),
-
-    addNode: (node) =>
-      set((state) => {
-        state.nodes.push(node);
-        if (!state._isSyncing) {
-          state.isDirty = true;
-        }
-      }),
-
-    removeNode: (id) =>
-      set((state) => {
-        const plainEdges = current(state.edges);
-        const descendants = collectDescendantIds(id, plainEdges);
-        const removeTargets = new Set([id, ...descendants]);
-
-        state.nodes = state.nodes.filter((node) => !removeTargets.has(node.id));
-        state.edges = state.edges.filter(
-          (edge) =>
-            !removeTargets.has(edge.source) && !removeTargets.has(edge.target),
-        );
-
-        if (
-          state.activePanelNodeId &&
-          removeTargets.has(state.activePanelNodeId)
-        ) {
-          state.activePanelNodeId = null;
-        }
-
-        if (state.startNodeId && removeTargets.has(state.startNodeId)) {
-          state.startNodeId = null;
-          state.creationMethod = null;
-        }
-
-        if (state.endNodeId && removeTargets.has(state.endNodeId)) {
-          state.endNodeId = null;
-        }
-
         if (!state._isSyncing) {
           state.isDirty = true;
         }
@@ -238,30 +218,43 @@ export const useWorkflowStore = create<
         state._isSyncing = false;
       }),
 
+    syncWorkflowGraph: (payload, options) =>
+      set((state) => {
+        const preserveActivePanelNodeId =
+          options?.preserveActivePanelNodeId ?? true;
+        const preserveActivePlaceholder =
+          options?.preserveActivePlaceholder ?? true;
+        const preserveDirty = options?.preserveDirty ?? true;
+
+        state.workflowId = payload.workflowId;
+        state.workflowName = payload.workflowName;
+        state.nodes = payload.nodes;
+        state.edges = payload.edges;
+        state.startNodeId = payload.startNodeId;
+        state.endNodeId = payload.endNodeId;
+        state.creationMethod = payload.creationMethod;
+        state.activePanelNodeId = preserveActivePanelNodeId
+          ? hasNode(payload.nodes, state.activePanelNodeId)
+            ? state.activePanelNodeId
+            : null
+          : null;
+        if (!preserveActivePlaceholder) {
+          state.activePlaceholder = null;
+        }
+        state.isDirty = preserveDirty ? state.isDirty : false;
+        state._isSyncing = false;
+      }),
+
     setWorkflowName: (name) =>
       set((state) => {
         state.workflowName = name;
         state.isDirty = true;
       }),
 
-    setExecutionStatus: (status) =>
+    setEditorCapabilities: (capabilities) =>
       set((state) => {
-        state.executionStatus = status;
+        state.editorCapabilities = capabilities;
       }),
-
-    batchServerSync: (fn) => {
-      set((state) => {
-        state._isSyncing = true;
-      });
-
-      try {
-        fn();
-      } finally {
-        set((state) => {
-          state._isSyncing = false;
-        });
-      }
-    },
 
     markClean: () =>
       set((state) => {

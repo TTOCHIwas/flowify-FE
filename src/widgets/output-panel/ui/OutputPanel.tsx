@@ -4,21 +4,27 @@ import { MdCancel } from "react-icons/md";
 import { Box, Icon, Spinner, Text, VStack } from "@chakra-ui/react";
 
 import { NODE_REGISTRY } from "@/entities/node";
-import { type DataType, type NodeMeta, type NodeType } from "@/entities/node";
+import {
+  type DataType,
+  type FlowNodeData,
+  type NodeType,
+} from "@/entities/node";
 import {
   type ChoiceBranchConfig,
   type ChoiceFollowUp,
   type ChoiceOption,
   type ChoiceResponse,
+  type WorkflowResponse,
   findAddedNodeId,
-  toFlowNode,
+  toBackendDataType,
+  toBackendNodeType,
   toNodeAddRequest,
   useAddWorkflowNodeMutation,
   useDeleteWorkflowNodeMutation,
   useSelectWorkflowChoiceMutation,
+  useUpdateWorkflowNodeMutation,
   useWorkflowChoicesQuery,
 } from "@/entities/workflow";
-import { useAddNode } from "@/features/add-node";
 import {
   MAPPING_NODE_TYPE_MAP,
   MAPPING_RULES,
@@ -33,7 +39,7 @@ import {
   type MappingDataTypeKey,
 } from "@/features/choice-panel";
 import { PanelRenderer } from "@/features/configure-node";
-import { useWorkflowStore } from "@/features/workflow-editor";
+import { hydrateStore, useWorkflowStore } from "@/features/workflow-editor";
 import { useDualPanelLayout } from "@/shared";
 
 import {
@@ -61,13 +67,20 @@ const DEFAULT_FLOW_NODE_WIDTH = 172;
 const NODE_GAP_X = 96;
 const PANEL_TRANSITION_MS = 240;
 
-const createTemporaryNodeLabel = (outputType: DataType | null) =>
-  outputType ? `${OUTPUT_DATA_LABELS[outputType]} 설정` : "설정 중";
-
 const isMappingDataTypeKey = (
   value: string | null | undefined,
 ): value is MappingDataTypeKey =>
   Boolean(value && value in MAPPING_RULES.data_types);
+
+type WizardNodeSnapshot = {
+  authWarning?: boolean;
+  config: FlowNodeData["config"];
+  inputTypes: DataType[];
+  outputTypes: DataType[];
+  position: { x: number; y: number };
+  role: "start" | "middle" | "end";
+  type: NodeType;
+};
 
 const toChoiceFollowUp = (followUp: FollowUp | null | undefined) =>
   followUp
@@ -211,18 +224,20 @@ export const OutputPanel = () => {
   const workflowId = useWorkflowStore((state) => state.workflowId);
   const startNodeId = useWorkflowStore((state) => state.startNodeId);
   const endNodeId = useWorkflowStore((state) => state.endNodeId);
-  const onConnect = useWorkflowStore((state) => state.onConnect);
-  const addNode = useWorkflowStore((state) => state.addNode);
-  const removeNode = useWorkflowStore((state) => state.removeNode);
-  const batchServerSync = useWorkflowStore((state) => state.batchServerSync);
-  const updateNodeConfig = useWorkflowStore((state) => state.updateNodeConfig);
+  const canEditNodes = useWorkflowStore(
+    (state) => state.editorCapabilities.canEditNodes,
+  );
+  const syncWorkflowGraph = useWorkflowStore(
+    (state) => state.syncWorkflowGraph,
+  );
   const openPanel = useWorkflowStore((state) => state.openPanel);
   const closePanel = useWorkflowStore((state) => state.closePanel);
-  const { addNode: addLocalNode } = useAddNode();
   const { mutateAsync: addWorkflowNode, isPending: isAddNodePending } =
     useAddWorkflowNodeMutation();
   const { mutateAsync: deleteWorkflowNode, isPending: isDeleteNodePending } =
     useDeleteWorkflowNodeMutation();
+  const { mutateAsync: updateWorkflowNode, isPending: isUpdateNodePending } =
+    useUpdateWorkflowNodeMutation();
   const {
     mutateAsync: selectWorkflowChoice,
     isPending: isSelectChoicePending,
@@ -243,13 +258,14 @@ export const OutputPanel = () => {
     useState<ChoiceFollowUp | null>(null);
   const [selectedBranchConfig, setSelectedBranchConfig] =
     useState<ChoiceBranchConfig | null>(null);
-  const [processingNodeId, setProcessingNodeId] = useState<string | null>(null);
-  const [placedNodeId, setPlacedNodeId] = useState<string | null>(null);
+  const [stagingNodeId, setStagingNodeId] = useState<string | null>(null);
   const [rootParentNodeId, setRootParentNodeId] = useState<string | null>(null);
-  const [rootPosition, setRootPosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
+  const [baseStagingSnapshot, setBaseStagingSnapshot] =
+    useState<WizardNodeSnapshot | null>(null);
+  const [actionNodeId, setActionNodeId] = useState<string | null>(null);
+  const [sessionOwnedLeafNodeIds, setSessionOwnedLeafNodeIds] = useState<
+    string[]
+  >([]);
   const [wizardError, setWizardError] = useState<string | null>(null);
 
   const resetWizardState = useCallback(() => {
@@ -260,10 +276,11 @@ export const OutputPanel = () => {
     setSelectedAction(null);
     setSelectedFollowUp(null);
     setSelectedBranchConfig(null);
-    setProcessingNodeId(null);
-    setPlacedNodeId(null);
+    setStagingNodeId(null);
     setRootParentNodeId(null);
-    setRootPosition(null);
+    setBaseStagingSnapshot(null);
+    setActionNodeId(null);
+    setSessionOwnedLeafNodeIds([]);
     setWizardError(null);
   }, []);
 
@@ -284,6 +301,42 @@ export const OutputPanel = () => {
         ? (nodes.find((node) => node.id === incomingEdge.source) ?? null)
         : null,
     [incomingEdge, nodes],
+  );
+  const stagingNode = useMemo(
+    () => nodes.find((node) => node.id === stagingNodeId) ?? null,
+    [nodes, stagingNodeId],
+  );
+  const actionNode = useMemo(
+    () => nodes.find((node) => node.id === actionNodeId) ?? null,
+    [actionNodeId, nodes],
+  );
+
+  const resolveNodeRole = useCallback(
+    (nodeId: string): "start" | "middle" | "end" => {
+      if (nodeId === startNodeId) {
+        return "start";
+      }
+      if (nodeId === endNodeId) {
+        return "end";
+      }
+      return "middle";
+    },
+    [endNodeId, startNodeId],
+  );
+
+  const createSnapshot = useCallback(
+    (node: (typeof nodes)[number]): WizardNodeSnapshot => ({
+      authWarning: node.data.authWarning,
+      config: {
+        ...node.data.config,
+      } as FlowNodeData["config"],
+      inputTypes: [...node.data.inputTypes],
+      outputTypes: [...node.data.outputTypes],
+      position: { ...node.position },
+      role: resolveNodeRole(node.id),
+      type: node.data.type,
+    }),
+    [resolveNodeRole],
   );
 
   const isStartNode = activeNode?.id === startNodeId;
@@ -351,6 +404,7 @@ export const OutputPanel = () => {
     isChoicesLoading ||
     isAddNodePending ||
     isDeleteNodePending ||
+    isUpdateNodePending ||
     isSelectChoicePending;
   const closedTransform =
     layout.mode === "stacked"
@@ -360,56 +414,127 @@ export const OutputPanel = () => {
     ? `transform ${PANEL_TRANSITION_MS}ms ease, opacity ${PANEL_TRANSITION_MS}ms ease, visibility 0ms linear 0ms`
     : `transform ${PANEL_TRANSITION_MS}ms ease, opacity ${PANEL_TRANSITION_MS}ms ease, visibility 0ms linear ${PANEL_TRANSITION_MS}ms`;
 
-  const createLocalNode = useCallback(
+  const buildNodeConfig = useCallback(
     ({
-      meta,
-      sourceNodeId,
-      position,
-      outputDataType,
-      label,
+      type,
+      baseConfig,
+      isConfigured,
+      overrides,
+      preserveExistingConfig = false,
     }: {
-      meta: NodeMeta;
-      sourceNodeId: string;
-      position: { x: number; y: number };
-      outputDataType?: DataType;
-      label?: string;
-    }) => {
-      const nodeId = addLocalNode(meta.type, {
-        position,
-        outputTypes: outputDataType ? [outputDataType] : undefined,
-        label,
-      });
-
-      onConnect({
-        source: sourceNodeId,
-        target: nodeId,
-        sourceHandle: null,
-        targetHandle: null,
-      });
-
-      return nodeId;
-    },
-    [addLocalNode, onConnect],
+      type: NodeType;
+      baseConfig?: FlowNodeData["config"];
+      isConfigured: boolean;
+      overrides?: Partial<FlowNodeData["config"]>;
+      preserveExistingConfig?: boolean;
+    }) =>
+      ({
+        ...(preserveExistingConfig
+          ? (baseConfig ?? NODE_REGISTRY[type].defaultConfig)
+          : NODE_REGISTRY[type].defaultConfig),
+        ...overrides,
+        isConfigured,
+      }) as FlowNodeData["config"],
+    [],
   );
 
-  const createTemporaryWizardNode = useCallback(
-    ({
-      sourceNodeId,
+  const syncWorkflowFromResponse = useCallback(
+    (workflow: WorkflowResponse) => {
+      syncWorkflowGraph(hydrateStore(workflow), {
+        preserveActivePanelNodeId: true,
+        preserveActivePlaceholder: true,
+        preserveDirty: true,
+      });
+    },
+    [syncWorkflowGraph],
+  );
+
+  const syncUpdatedNode = useCallback(
+    (workflow: WorkflowResponse, nodeId: string) => {
+      const nextNode = workflow.nodes.find((node) => node.id === nodeId);
+      if (!nextNode) {
+        throw new Error("node was not updated");
+      }
+
+      syncWorkflowFromResponse(workflow);
+      return nextNode.id;
+    },
+    [syncWorkflowFromResponse],
+  );
+
+  const canSafelyDeleteWizardLeaf = useCallback(
+    (nodeId: string) => {
+      if (!sessionOwnedLeafNodeIds.includes(nodeId)) {
+        return false;
+      }
+
+      if (nodeId === stagingNodeId) {
+        return false;
+      }
+
+      if (resolveNodeRole(nodeId) !== "middle") {
+        return false;
+      }
+
+      return !edges.some((edge) => edge.source === nodeId);
+    },
+    [edges, resolveNodeRole, sessionOwnedLeafNodeIds, stagingNodeId],
+  );
+
+  const updatePersistedNode = useCallback(
+    async ({
+      node,
+      type,
+      config,
+      inputDataTypeKey,
+      outputDataTypeKey,
       position,
-      outputType,
+      role,
     }: {
-      sourceNodeId: string;
-      position: { x: number; y: number };
-      outputType: DataType | null;
-    }) =>
-      createLocalNode({
-        meta: NODE_REGISTRY["data-process"],
-        sourceNodeId,
-        position,
-        outputDataType: outputType ?? undefined,
-        label: createTemporaryNodeLabel(outputType),
-      }),
-    [createLocalNode],
+      node: (typeof nodes)[number];
+      type: NodeType;
+      config: FlowNodeData["config"];
+      inputDataTypeKey?: MappingDataTypeKey | null;
+      outputDataTypeKey?: MappingDataTypeKey | null;
+      position?: { x: number; y: number };
+      role?: "start" | "middle" | "end";
+    }) => {
+      if (!workflowId) {
+        throw new Error("workflowId is required");
+      }
+
+      const nextWorkflow = await updateWorkflowNode({
+        workflowId,
+        nodeId: node.id,
+        body: {
+          category: toBackendNodeType(type).category,
+          type: toBackendNodeType(type).type,
+          config: config as unknown as Record<string, unknown>,
+          position: position ?? node.position,
+          dataType:
+            inputDataTypeKey !== undefined
+              ? inputDataTypeKey
+                ? toBackendDataType(toDataType(inputDataTypeKey))
+                : null
+              : node.data.inputTypes[0]
+                ? toBackendDataType(node.data.inputTypes[0])
+                : null,
+          outputDataType:
+            outputDataTypeKey !== undefined
+              ? outputDataTypeKey
+                ? toBackendDataType(toDataType(outputDataTypeKey))
+                : null
+              : node.data.outputTypes[0]
+                ? toBackendDataType(node.data.outputTypes[0])
+                : null,
+          role: role ?? resolveNodeRole(node.id),
+          authWarning: node.data.authWarning ?? false,
+        },
+      });
+
+      return syncUpdatedNode(nextWorkflow, node.id);
+    },
+    [resolveNodeRole, syncUpdatedNode, updateWorkflowNode, workflowId],
   );
 
   const placeWorkflowNode = useCallback(
@@ -417,25 +542,19 @@ export const OutputPanel = () => {
       type,
       sourceNodeId,
       position,
+      inputDataTypeKey,
       outputDataTypeKey,
-      label,
+      config,
     }: {
       type: NodeType;
       sourceNodeId: string;
       position: { x: number; y: number };
+      inputDataTypeKey?: MappingDataTypeKey | null;
       outputDataTypeKey: MappingDataTypeKey | null;
-      label?: string;
+      config?: Partial<FlowNodeData["config"]>;
     }) => {
       if (!workflowId) {
-        return createLocalNode({
-          meta: NODE_REGISTRY[type],
-          sourceNodeId,
-          position,
-          outputDataType: outputDataTypeKey
-            ? toDataType(outputDataTypeKey)
-            : undefined,
-          label,
-        });
+        throw new Error("workflowId is required");
       }
 
       const previousNodes = useWorkflowStore.getState().nodes;
@@ -445,6 +564,10 @@ export const OutputPanel = () => {
           type,
           position,
           prevNodeId: sourceNodeId,
+          config,
+          inputTypes: inputDataTypeKey
+            ? [toDataType(inputDataTypeKey)]
+            : undefined,
           outputTypes: outputDataTypeKey
             ? [toDataType(outputDataTypeKey)]
             : undefined,
@@ -463,49 +586,25 @@ export const OutputPanel = () => {
         return null;
       }
 
-      batchServerSync(() => {
-        addNode(toFlowNode(addedNode));
-        onConnect({
-          source: sourceNodeId,
-          target: addedNodeId,
-          sourceHandle: null,
-          targetHandle: null,
-        });
-
-        if (label) {
-          updateNodeConfig(addedNodeId, {});
-        }
-      });
-
+      syncWorkflowFromResponse(nextWorkflow);
       return addedNodeId;
     },
-    [
-      addNode,
-      addWorkflowNode,
-      batchServerSync,
-      createLocalNode,
-      onConnect,
-      updateNodeConfig,
-      workflowId,
-    ],
+    [addWorkflowNode, syncWorkflowFromResponse, workflowId],
   );
 
   const removeWorkflowNode = useCallback(
     async (nodeId: string) => {
-      if (workflowId) {
-        await deleteWorkflowNode({
-          workflowId,
-          nodeId,
-        });
-        batchServerSync(() => {
-          removeNode(nodeId);
-        });
-        return;
+      if (!workflowId) {
+        throw new Error("workflowId is required");
       }
 
-      removeNode(nodeId);
+      const nextWorkflow = await deleteWorkflowNode({
+        workflowId,
+        nodeId,
+      });
+      syncWorkflowFromResponse(nextWorkflow);
     },
-    [batchServerSync, deleteWorkflowNode, removeNode, workflowId],
+    [deleteWorkflowNode, syncWorkflowFromResponse, workflowId],
   );
 
   useEffect(() => {
@@ -519,11 +618,18 @@ export const OutputPanel = () => {
     }
 
     const mappingKey = toMappingKey(parentOutputType);
+    setStagingNodeId(activeNode.id);
     setRootParentNodeId(parentNode.id);
-    setRootPosition(activeNode.position);
+    setBaseStagingSnapshot(createSnapshot(activeNode));
     setInitialDataTypeKey(mappingKey);
     setCurrentDataTypeKey(mappingKey);
-  }, [activeNode, initialDataTypeKey, isWizardMode, parentNode]);
+  }, [
+    activeNode,
+    createSnapshot,
+    initialDataTypeKey,
+    isWizardMode,
+    parentNode,
+  ]);
 
   useEffect(() => {
     if (!isWizardMode || wizardStep || !initialChoiceResponse) {
@@ -547,7 +653,12 @@ export const OutputPanel = () => {
   };
 
   const handleProcessingMethodSelect = async (option: WizardChoiceOption) => {
-    if (!activeNode || !rootParentNodeId || !currentDataTypeKey) {
+    if (
+      !stagingNode ||
+      !rootParentNodeId ||
+      !currentDataTypeKey ||
+      !initialDataTypeKey
+    ) {
       return;
     }
 
@@ -555,19 +666,12 @@ export const OutputPanel = () => {
     setSelectedProcessingOption(option);
 
     try {
-      const selectionResult = workflowId
-        ? await selectWorkflowChoice({
-            workflowId,
-            prevNodeId: rootParentNodeId,
-            selectedOptionId: option.id,
-            dataType: currentDataTypeKey,
-          })
-        : {
-            nodeType: option.node_type ?? null,
-            outputDataType: option.output_data_type ?? currentDataTypeKey,
-            followUp: null,
-            branchConfig: null,
-          };
+      const selectionResult = await selectWorkflowChoice({
+        workflowId,
+        prevNodeId: rootParentNodeId,
+        selectedOptionId: option.id,
+        dataType: currentDataTypeKey,
+      });
 
       const nextDataTypeKey = isMappingDataTypeKey(
         selectionResult.outputDataType,
@@ -577,33 +681,33 @@ export const OutputPanel = () => {
           ? option.output_data_type
           : currentDataTypeKey;
 
-      setCurrentDataTypeKey(nextDataTypeKey);
-
       const nextActions = buildLocalActionResponse(nextDataTypeKey);
+
+      const nextNodeType = selectionResult.nodeType
+        ? toChoiceNodeType(selectionResult.nodeType)
+        : toChoiceNodeType(option.node_type);
+      const isConfigured = nextActions.options.length === 0;
+
+      await updatePersistedNode({
+        node: stagingNode,
+        type: nextNodeType,
+        config: buildNodeConfig({
+          type: nextNodeType,
+          isConfigured,
+        }),
+        inputDataTypeKey: initialDataTypeKey,
+        outputDataTypeKey: nextDataTypeKey,
+        role: baseStagingSnapshot?.role ?? resolveNodeRole(stagingNode.id),
+      });
+
+      openPanel(stagingNode.id);
+
       if (nextActions.options.length > 0) {
+        setCurrentDataTypeKey(nextDataTypeKey);
         setWizardStep("action");
         return;
       }
 
-      removeNode(activeNode.id);
-
-      const nextNodeType = selectionResult.nodeType
-        ? toChoiceNodeType(selectionResult.nodeType)
-        : "data-process";
-      const nextNodeId = await placeWorkflowNode({
-        type: nextNodeType,
-        sourceNodeId: rootParentNodeId,
-        position: activeNode.position,
-        outputDataTypeKey: nextDataTypeKey,
-        label: selectionResult.nodeType ? undefined : option.label,
-      });
-
-      if (!nextNodeId) {
-        throw new Error("node was not created");
-      }
-
-      updateNodeConfig(nextNodeId, {});
-      openPanel(nextNodeId);
       finishWizard();
     } catch {
       setWizardError("처리 방식을 반영하지 못했습니다.");
@@ -611,26 +715,19 @@ export const OutputPanel = () => {
   };
 
   const handleActionSelect = async (action: WizardChoiceOption) => {
-    if (!activeNode || !rootParentNodeId || !currentDataTypeKey) {
+    if (!stagingNode || !rootParentNodeId || !currentDataTypeKey) {
       return;
     }
 
     setWizardError(null);
 
     try {
-      const selectionResult = workflowId
-        ? await selectWorkflowChoice({
-            workflowId,
-            prevNodeId: rootParentNodeId,
-            selectedOptionId: action.id,
-            dataType: currentDataTypeKey,
-          })
-        : {
-            nodeType: action.node_type ?? null,
-            outputDataType: action.output_data_type ?? currentDataTypeKey,
-            followUp: action.followUp ?? null,
-            branchConfig: action.branchConfig ?? null,
-          };
+      const selectionResult = await selectWorkflowChoice({
+        workflowId,
+        prevNodeId: rootParentNodeId,
+        selectedOptionId: action.id,
+        dataType: currentDataTypeKey,
+      });
 
       const nextDataTypeKey = isMappingDataTypeKey(
         selectionResult.outputDataType,
@@ -644,108 +741,125 @@ export const OutputPanel = () => {
       const branchConfig =
         selectionResult.branchConfig ?? action.branchConfig ?? null;
 
-      removeNode(activeNode.id);
-
-      let sourceNodeId = rootParentNodeId;
-      let actionPosition = activeNode.position;
-
-      if (selectedProcessingOption?.node_type && !processingNodeId) {
-        const createdProcessingNodeId = await placeWorkflowNode({
-          type: toChoiceNodeType(selectedProcessingOption.node_type),
-          sourceNodeId: rootParentNodeId,
-          position: rootPosition ?? activeNode.position,
-          outputDataTypeKey: currentDataTypeKey,
-        });
-
-        if (!createdProcessingNodeId) {
-          throw new Error("processing node was not created");
-        }
-
-        updateNodeConfig(createdProcessingNodeId, {});
-        setProcessingNodeId(createdProcessingNodeId);
-        sourceNodeId = createdProcessingNodeId;
-        actionPosition = {
-          x:
-            (rootPosition ?? activeNode.position).x +
-            DEFAULT_FLOW_NODE_WIDTH +
-            NODE_GAP_X,
-          y: (rootPosition ?? activeNode.position).y,
-        };
-      } else if (processingNodeId) {
-        sourceNodeId = processingNodeId;
-      }
-
       const actionNodeType = selectionResult.nodeType
         ? toChoiceNodeType(selectionResult.nodeType)
         : toChoiceNodeType(action.node_type);
-      const actionNodeId = await placeWorkflowNode({
+      const hasFollowUp = Boolean(followUp || branchConfig);
+      const finalActionConfig = buildNodeConfig({
         type: actionNodeType,
-        sourceNodeId,
-        position: actionPosition,
-        outputDataTypeKey: nextDataTypeKey,
+        isConfigured: !hasFollowUp,
+        overrides: hasFollowUp
+          ? undefined
+          : {
+              choiceActionId: action.id,
+              choiceSelections: null,
+            },
       });
+      const shouldUseActionLeaf = stagingNode.data.type === "loop";
+      let targetNodeId = stagingNode.id;
 
-      if (!actionNodeId) {
-        throw new Error("action node was not created");
+      if (shouldUseActionLeaf) {
+        if (actionNode) {
+          await updatePersistedNode({
+            node: actionNode,
+            type: actionNodeType,
+            config: finalActionConfig,
+            inputDataTypeKey: currentDataTypeKey,
+            outputDataTypeKey: nextDataTypeKey,
+          });
+          targetNodeId = actionNode.id;
+        } else {
+          const createdActionNodeId = await placeWorkflowNode({
+            type: actionNodeType,
+            sourceNodeId: stagingNode.id,
+            position: {
+              x: stagingNode.position.x + DEFAULT_FLOW_NODE_WIDTH + NODE_GAP_X,
+              y: stagingNode.position.y,
+            },
+            inputDataTypeKey: currentDataTypeKey,
+            outputDataTypeKey: nextDataTypeKey,
+            config: finalActionConfig,
+          });
+
+          if (!createdActionNodeId) {
+            throw new Error("action node was not created");
+          }
+
+          setActionNodeId(createdActionNodeId);
+          setSessionOwnedLeafNodeIds((current) =>
+            current.includes(createdActionNodeId)
+              ? current
+              : [...current, createdActionNodeId],
+          );
+          targetNodeId = createdActionNodeId;
+        }
+      } else {
+        await updatePersistedNode({
+          node: stagingNode,
+          type: actionNodeType,
+          config: finalActionConfig,
+          inputDataTypeKey: currentDataTypeKey,
+          outputDataTypeKey: nextDataTypeKey,
+          role: baseStagingSnapshot?.role ?? resolveNodeRole(stagingNode.id),
+        });
+        setActionNodeId(null);
       }
 
       setSelectedAction(action);
       setSelectedFollowUp(followUp);
       setSelectedBranchConfig(branchConfig);
-      setPlacedNodeId(actionNodeId);
-      openPanel(actionNodeId);
+      setCurrentDataTypeKey(nextDataTypeKey);
+      openPanel(targetNodeId);
 
       if (followUp || branchConfig) {
         setWizardStep("follow-up");
         return;
       }
 
-      updateNodeConfig(actionNodeId, {
-        choiceActionId: action.id,
-        choiceSelections: null,
-      });
       finishWizard();
     } catch {
-      setWizardError("작업 노드를 추가하지 못했습니다.");
+      setWizardError("작업 노드를 반영하지 못했습니다.");
     }
   };
 
   const handleBackToProcessingMethod = async () => {
-    if (!initialDataTypeKey || !rootParentNodeId) {
+    if (!initialDataTypeKey || !stagingNode || !baseStagingSnapshot) {
       return;
     }
 
     setWizardError(null);
 
     try {
-      if (!processingNodeId && !placedNodeId) {
-        setSelectedAction(null);
-        setSelectedFollowUp(null);
-        setSelectedBranchConfig(null);
-        setSelectedProcessingOption(null);
-        setCurrentDataTypeKey(initialDataTypeKey);
-        setWizardStep("processing-method");
-        return;
+      if (actionNodeId && actionNode) {
+        if (!canSafelyDeleteWizardLeaf(actionNode.id)) {
+          setWizardError(
+            "이미 후속 연결이 생겨 이전 단계로 되돌릴 수 없습니다.",
+          );
+          return;
+        }
+
+        await removeWorkflowNode(actionNode.id);
+        setSessionOwnedLeafNodeIds((current) =>
+          current.filter((nodeId) => nodeId !== actionNode.id),
+        );
       }
 
-      if (processingNodeId) {
-        await removeWorkflowNode(processingNodeId);
-      } else if (placedNodeId) {
-        await removeWorkflowNode(placedNodeId);
-      }
+      await updatePersistedNode({
+        node: stagingNode,
+        type: baseStagingSnapshot.type,
+        config: baseStagingSnapshot.config,
+        inputDataTypeKey: baseStagingSnapshot.inputTypes[0]
+          ? toMappingKey(baseStagingSnapshot.inputTypes[0])
+          : null,
+        outputDataTypeKey: baseStagingSnapshot.outputTypes[0]
+          ? toMappingKey(baseStagingSnapshot.outputTypes[0])
+          : null,
+        position: baseStagingSnapshot.position,
+        role: baseStagingSnapshot.role,
+      });
 
-      const resetPosition = rootPosition ?? activeNode?.position;
-      if (resetPosition) {
-        const tempNodeId = createTemporaryWizardNode({
-          sourceNodeId: rootParentNodeId,
-          position: resetPosition,
-          outputType: parentNode?.data.outputTypes[0] ?? null,
-        });
-        openPanel(tempNodeId);
-      }
-
-      setProcessingNodeId(null);
-      setPlacedNodeId(null);
+      openPanel(stagingNode.id);
+      setActionNodeId(null);
       setSelectedAction(null);
       setSelectedFollowUp(null);
       setSelectedBranchConfig(null);
@@ -757,52 +871,54 @@ export const OutputPanel = () => {
     }
   };
 
-  const handleBackToAction = async () => {
-    const restoreSourceNodeId = processingNodeId ?? rootParentNodeId;
-    if (!restoreSourceNodeId) {
+  const handleBackToAction = () => {
+    const targetNodeId = actionNodeId ?? stagingNodeId;
+    if (!targetNodeId) {
+      return;
+    }
+
+    setWizardError(null);
+    openPanel(targetNodeId);
+    setSelectedAction(null);
+    setSelectedFollowUp(null);
+    setSelectedBranchConfig(null);
+    setWizardStep("action");
+  };
+  const handleFollowUpComplete = async (
+    selections: Record<string, string | string[]>,
+  ) => {
+    const targetNode = actionNode ?? stagingNode;
+    if (!targetNode || !selectedAction) {
       return;
     }
 
     setWizardError(null);
 
     try {
-      if (placedNodeId) {
-        await removeWorkflowNode(placedNodeId);
-      }
+      await updatePersistedNode({
+        node: targetNode,
+        type: targetNode.data.type,
+        config: buildNodeConfig({
+          type: targetNode.data.type,
+          baseConfig: targetNode.data.config,
+          isConfigured: true,
+          overrides: {
+            choiceActionId: selectedAction.id,
+            choiceSelections: selections,
+          },
+          preserveExistingConfig: true,
+        }),
+        role:
+          targetNode.id === stagingNode?.id
+            ? (baseStagingSnapshot?.role ?? resolveNodeRole(targetNode.id))
+            : resolveNodeRole(targetNode.id),
+      });
 
-      const restorePosition = activeNode?.position ?? rootPosition;
-      if (restorePosition) {
-        const tempNodeId = createTemporaryWizardNode({
-          sourceNodeId: restoreSourceNodeId,
-          position: restorePosition,
-          outputType:
-            currentDataTypeKey !== null ? toDataType(currentDataTypeKey) : null,
-        });
-        openPanel(tempNodeId);
-      }
-
-      setPlacedNodeId(null);
-      setSelectedAction(null);
-      setSelectedFollowUp(null);
-      setSelectedBranchConfig(null);
-      setWizardStep("action");
+      openPanel(targetNode.id);
+      finishWizard();
     } catch {
-      setWizardError("작업 선택 단계로 돌아가지 못했습니다.");
+      setWizardError("후속 설정을 반영하지 못했습니다.");
     }
-  };
-
-  const handleFollowUpComplete = (
-    selections: Record<string, string | string[]>,
-  ) => {
-    if (!placedNodeId || !selectedAction) {
-      return;
-    }
-
-    updateNodeConfig(placedNodeId, {
-      choiceActionId: selectedAction.id,
-      choiceSelections: selections,
-    });
-    finishWizard();
   };
 
   return (
@@ -848,7 +964,24 @@ export const OutputPanel = () => {
           </Box>
 
           <Box flex={1} overflow="auto" p={3}>
-            {wizardStep === "processing-method" && initialChoiceResponse ? (
+            {!canEditNodes ? (
+              <Box
+                p={4}
+                borderRadius="xl"
+                bg="gray.50"
+                border="1px solid"
+                borderColor="gray.200"
+              >
+                <Text fontSize="sm" color="text.secondary">
+                  공유된 워크플로우는 읽기 전용입니다. 이 노드 설정은 소유자만
+                  변경할 수 있습니다.
+                </Text>
+              </Box>
+            ) : null}
+
+            {canEditNodes &&
+            wizardStep === "processing-method" &&
+            initialChoiceResponse ? (
               <ProcessingMethodStep
                 question={initialChoiceResponse.question}
                 options={initialChoiceResponse.options}
@@ -856,7 +989,9 @@ export const OutputPanel = () => {
               />
             ) : null}
 
-            {wizardStep === "action" && activeActionChoiceResponse ? (
+            {canEditNodes &&
+            wizardStep === "action" &&
+            activeActionChoiceResponse ? (
               <ActionStep
                 question={activeActionChoiceResponse.question}
                 actions={activeActionChoiceResponse.options}
@@ -869,7 +1004,7 @@ export const OutputPanel = () => {
               />
             ) : null}
 
-            {wizardStep === "follow-up" ? (
+            {canEditNodes && wizardStep === "follow-up" ? (
               <FollowUpStep
                 followUp={selectedFollowUp}
                 branchConfig={selectedBranchConfig}
@@ -952,7 +1087,7 @@ export const OutputPanel = () => {
           </Box>
 
           <Box flex={1} overflow="auto">
-            <PanelRenderer />
+            <PanelRenderer readOnly={!canEditNodes} />
           </Box>
         </>
       )}
