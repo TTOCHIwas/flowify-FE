@@ -11,7 +11,6 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
 import { type FlowNodeData } from "@/entities/node";
-import { collectDescendantIds } from "@/shared/libs/graph";
 
 import { type WorkflowHydratedState } from "./workflow-editor-adapter";
 
@@ -46,9 +45,6 @@ interface WorkflowEditorActions {
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
-  addNode: (node: Node<FlowNodeData>) => void;
-  replaceNode: (node: Node<FlowNodeData>) => void;
-  removeNode: (id: string) => void;
   updateNodeConfig: (
     id: string,
     config: Partial<FlowNodeData["config"]>,
@@ -71,7 +67,6 @@ interface WorkflowEditorActions {
   setEndNodeId: (id: string | null) => void;
   setCreationMethod: (method: "manual" | null) => void;
   setActivePlaceholder: (placeholder: PlaceholderInfo | null) => void;
-  batchServerSync: (fn: () => void) => void;
   markClean: () => void;
   resetEditor: () => void;
 }
@@ -142,64 +137,6 @@ export const useWorkflowStore = create<
     onConnect: (connection) =>
       set((state) => {
         state.edges = addEdge(connection, current(state.edges));
-        if (!state._isSyncing) {
-          state.isDirty = true;
-        }
-      }),
-
-    addNode: (node) =>
-      set((state) => {
-        state.nodes.push(node);
-        if (!state._isSyncing) {
-          state.isDirty = true;
-        }
-      }),
-
-    replaceNode: (node) =>
-      set((state) => {
-        const index = state.nodes.findIndex(
-          (currentNode) => currentNode.id === node.id,
-        );
-
-        if (index === -1) {
-          state.nodes.push(node);
-        } else {
-          state.nodes[index] = node;
-        }
-
-        if (!state._isSyncing) {
-          state.isDirty = true;
-        }
-      }),
-
-    removeNode: (id) =>
-      set((state) => {
-        const plainEdges = current(state.edges);
-        const descendants = collectDescendantIds(id, plainEdges);
-        const removeTargets = new Set([id, ...descendants]);
-
-        state.nodes = state.nodes.filter((node) => !removeTargets.has(node.id));
-        state.edges = state.edges.filter(
-          (edge) =>
-            !removeTargets.has(edge.source) && !removeTargets.has(edge.target),
-        );
-
-        if (
-          state.activePanelNodeId &&
-          removeTargets.has(state.activePanelNodeId)
-        ) {
-          state.activePanelNodeId = null;
-        }
-
-        if (state.startNodeId && removeTargets.has(state.startNodeId)) {
-          state.startNodeId = null;
-          state.creationMethod = null;
-        }
-
-        if (state.endNodeId && removeTargets.has(state.endNodeId)) {
-          state.endNodeId = null;
-        }
-
         if (!state._isSyncing) {
           state.isDirty = true;
         }
@@ -318,20 +255,6 @@ export const useWorkflowStore = create<
       set((state) => {
         state.editorCapabilities = capabilities;
       }),
-
-    batchServerSync: (fn) => {
-      set((state) => {
-        state._isSyncing = true;
-      });
-
-      try {
-        fn();
-      } finally {
-        set((state) => {
-          state._isSyncing = false;
-        });
-      }
-    },
 
     markClean: () =>
       set((state) => {

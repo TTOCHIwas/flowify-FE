@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { Box } from "@chakra-ui/react";
@@ -11,6 +11,7 @@ import {
   useExecuteWorkflowMutation,
   useRollbackExecutionMutation,
   useStopExecutionMutation,
+  useWorkflowExecutionQuery,
   useWorkflowExecutionsQuery,
 } from "@/entities";
 import { useDeleteWorkflowMutation } from "@/entities/workflow";
@@ -77,29 +78,32 @@ export const EditorRemoteBar = () => {
   const { data: executions, refetch: refetchExecutions } =
     useWorkflowExecutionsQuery(workflowId || undefined, {
       enabled: Boolean(workflowId),
+    });
+  const { data: trackedExecution } = useWorkflowExecutionQuery(
+    workflowId || undefined,
+    trackedExecutionId ?? undefined,
+    {
+      enabled: Boolean(workflowId && trackedExecutionId),
       refetchInterval: (query) => {
-        if (trackedExecutionId) {
-          return executionPollInterval;
-        }
-
-        const currentExecutions = query.state.data;
-        if (!currentExecutions?.length) {
+        if (!trackedExecutionId) {
           return false;
         }
 
-        return currentExecutions.some((execution) =>
-          isExecutionInFlight(execution.state),
-        )
+        const currentExecution = query.state.data;
+        if (!currentExecution) {
+          return executionPollInterval;
+        }
+
+        return isExecutionInFlight(currentExecution.state)
           ? executionPollInterval
           : false;
       },
-    });
+    },
+  );
 
-  const trackedExecution = trackedExecutionId
-    ? (executions?.find((execution) => execution.id === trackedExecutionId) ??
-      null)
-    : null;
-  const activeExecution = trackedExecution ?? getLatestExecution(executions);
+  const activeExecution =
+    trackedExecution ??
+    (trackedExecutionId ? null : getLatestExecution(executions));
   const activeExecutionStatus = activeExecution
     ? normalizeExecutionStatus(activeExecution.state)
     : "idle";
@@ -151,6 +155,24 @@ export const EditorRemoteBar = () => {
     Boolean(activeExecution) &&
     activeExecutionStatus === "failed" &&
     !isRunning;
+
+  useEffect(() => {
+    if (
+      !trackedExecutionId ||
+      !trackedExecution ||
+      isExecutionInFlight(trackedExecution.state)
+    ) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setRunPhase("idle");
+      setTrackedExecutionId(null);
+      void refetchExecutions();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [refetchExecutions, trackedExecution, trackedExecutionId]);
 
   const saveCurrentWorkflow = async () => {
     if (!workflowId) {
