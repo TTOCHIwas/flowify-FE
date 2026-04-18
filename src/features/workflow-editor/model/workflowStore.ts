@@ -19,6 +19,11 @@ type PlaceholderInfo = {
   position: { x: number; y: number };
 };
 
+type NodePosition = {
+  x: number;
+  y: number;
+};
+
 export interface WorkflowEditorCapabilities {
   canViewEditor: boolean;
   canEditNodes: boolean;
@@ -37,6 +42,7 @@ interface WorkflowEditorState {
   workflowId: string;
   workflowName: string;
   editorCapabilities: WorkflowEditorCapabilities;
+  unsavedNodePositions: Record<string, NodePosition>;
   isDirty: boolean;
   _isSyncing: boolean;
 }
@@ -67,6 +73,10 @@ interface WorkflowEditorActions {
   setEndNodeId: (id: string | null) => void;
   setCreationMethod: (method: "manual" | null) => void;
   setActivePlaceholder: (placeholder: PlaceholderInfo | null) => void;
+  applyLayoutPositions: (
+    updates: Array<{ nodeId: string; position: NodePosition }>,
+  ) => void;
+  clearUnsavedNodePositions: (nodeIds?: string[]) => void;
   markClean: () => void;
   resetEditor: () => void;
 }
@@ -87,6 +97,7 @@ const initialState: WorkflowEditorState = {
     canSaveWorkflow: true,
     canRunWorkflow: true,
   },
+  unsavedNodePositions: {},
   isDirty: false,
   _isSyncing: false,
 };
@@ -96,6 +107,25 @@ const hasNode = (
   nodeId: string | null,
 ): nodeId is string =>
   Boolean(nodeId && nodes.some((node) => node.id === nodeId));
+
+const mergeNodesWithUnsavedPositions = (
+  nodes: Node<FlowNodeData>[],
+  unsavedNodePositions: Record<string, NodePosition>,
+) =>
+  nodes.map((node) => {
+    const positionOverride = unsavedNodePositions[node.id];
+    if (!positionOverride) {
+      return node;
+    }
+
+    return {
+      ...node,
+      position: {
+        x: positionOverride.x,
+        y: positionOverride.y,
+      },
+    };
+  });
 
 export const useWorkflowStore = create<
   WorkflowEditorState & WorkflowEditorActions
@@ -111,6 +141,23 @@ export const useWorkflowStore = create<
         );
 
         if (!state._isSyncing) {
+          changes.forEach((change) => {
+            if (
+              change.type === "position" &&
+              change.position &&
+              "id" in change
+            ) {
+              state.unsavedNodePositions[change.id] = {
+                x: change.position.x,
+                y: change.position.y,
+              };
+            }
+
+            if (change.type === "remove" && "id" in change) {
+              delete state.unsavedNodePositions[change.id];
+            }
+          });
+
           const hasDirtyChange = changes.some(
             (change) => change.type === "position" || change.type === "replace",
           );
@@ -197,6 +244,41 @@ export const useWorkflowStore = create<
         state.activePlaceholder = placeholder;
       }),
 
+    applyLayoutPositions: (updates) =>
+      set((state) => {
+        if (updates.length === 0) {
+          return;
+        }
+
+        const nextPositionMap = Object.fromEntries(
+          updates.map(({ nodeId, position }) => [nodeId, position]),
+        );
+
+        state.nodes = state.nodes.map((node) => {
+          const nextPosition = nextPositionMap[node.id];
+          if (!nextPosition) {
+            return node;
+          }
+
+          state.unsavedNodePositions[node.id] = {
+            x: nextPosition.x,
+            y: nextPosition.y,
+          };
+
+          return {
+            ...node,
+            position: {
+              x: nextPosition.x,
+              y: nextPosition.y,
+            },
+          };
+        });
+
+        if (!state._isSyncing) {
+          state.isDirty = true;
+        }
+      }),
+
     setWorkflowMeta: (id, name) =>
       set((state) => {
         state.workflowId = id;
@@ -214,6 +296,7 @@ export const useWorkflowStore = create<
         state.creationMethod = payload.creationMethod;
         state.activePanelNodeId = null;
         state.activePlaceholder = null;
+        state.unsavedNodePositions = {};
         state.isDirty = false;
         state._isSyncing = false;
       }),
@@ -225,14 +308,24 @@ export const useWorkflowStore = create<
         const preserveActivePlaceholder =
           options?.preserveActivePlaceholder ?? true;
         const preserveDirty = options?.preserveDirty ?? true;
+        const nextNodeIds = new Set(payload.nodes.map((node) => node.id));
+        const preservedUnsavedNodePositions = Object.fromEntries(
+          Object.entries(state.unsavedNodePositions).filter(([nodeId]) =>
+            nextNodeIds.has(nodeId),
+          ),
+        );
 
         state.workflowId = payload.workflowId;
         state.workflowName = payload.workflowName;
-        state.nodes = payload.nodes;
+        state.nodes = mergeNodesWithUnsavedPositions(
+          payload.nodes,
+          preservedUnsavedNodePositions,
+        );
         state.edges = payload.edges;
         state.startNodeId = payload.startNodeId;
         state.endNodeId = payload.endNodeId;
         state.creationMethod = payload.creationMethod;
+        state.unsavedNodePositions = preservedUnsavedNodePositions;
         state.activePanelNodeId = preserveActivePanelNodeId
           ? hasNode(payload.nodes, state.activePanelNodeId)
             ? state.activePanelNodeId
@@ -256,8 +349,21 @@ export const useWorkflowStore = create<
         state.editorCapabilities = capabilities;
       }),
 
+    clearUnsavedNodePositions: (nodeIds) =>
+      set((state) => {
+        if (!nodeIds || nodeIds.length === 0) {
+          state.unsavedNodePositions = {};
+          return;
+        }
+
+        nodeIds.forEach((nodeId) => {
+          delete state.unsavedNodePositions[nodeId];
+        });
+      }),
+
     markClean: () =>
       set((state) => {
+        state.unsavedNodePositions = {};
         state.isDirty = false;
       }),
 
