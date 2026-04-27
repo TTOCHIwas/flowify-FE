@@ -1,6 +1,7 @@
 // 기본적인 router path를 상수로 정의
 export const ROUTE_PATHS = {
   MAIN: "/",
+  DASHBOARD: "/dashboard",
   LOGIN: "/login",
   AUTH_CALLBACK: "/auth/callback",
   ACCOUNT: "/account",

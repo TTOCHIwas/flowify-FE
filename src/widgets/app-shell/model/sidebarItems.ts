@@ -41,7 +41,7 @@ export const sidebarPrimaryItems: SidebarItem[] = [
     label: "홈",
     icon: MdOutlineHome,
     kind: "route",
-    path: ROUTE_PATHS.MAIN,
+    path: ROUTE_PATHS.DASHBOARD,
   },
   {
     id: "workflows",
